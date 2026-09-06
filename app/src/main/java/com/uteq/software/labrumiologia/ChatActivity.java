@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.uteq.software.labrumiologia.data.AssistantRepository;
 import com.uteq.software.labrumiologia.data.LocalGuide;
 import com.uteq.software.labrumiologia.ui.ChatAdapter;
 
@@ -48,7 +49,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private MaterialButton btnVoice;
     private TextView voiceStatus;
     private TextView voiceName;
-    private LocalGuide guide;
+    private AssistantRepository assistant;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
     private SpeechRecognizer speechRecognizer;
@@ -73,7 +74,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         messages.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ChatAdapter();
         messages.setAdapter(adapter);
-        guide = new LocalGuide(this);
+        assistant = new AssistantRepository(this);
 
         input = findViewById(R.id.chatInput);
         btnSend = findViewById(R.id.btnSend);
@@ -334,7 +335,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         voiceMode = false;
 
         io.execute(() -> {
-            LocalGuide.Reply reply = guide.ask(question, equipmentId);
+            LocalGuide.Reply reply = assistant.ask(question, equipmentId);
             runOnUiThread(() -> {
                 if (isDestroyed()) return;
                 btnSend.setEnabled(true);

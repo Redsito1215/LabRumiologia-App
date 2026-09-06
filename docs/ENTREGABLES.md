@@ -30,4 +30,4 @@ Coloque en `docs/evidencias/`:
 
 - El dataset actual incluye un **pipeline sintético de prueba**. Debe reemplazarse por fotos reales del Laboratorio de Rumiología etiquetadas en Label Studio (80–150 por clase).
 - En Windows, la exportación TFLite puede fallar en el paso de metadata; el `.tflite` generado por onnx2tf en `ml/models/best_saved_model/` es válido. Preferible re-entrenar/exportar en Colab/Linux con fotos reales.
-- Configure `OPENAI_API_KEY` y ejecute `python -m scripts.upload_vector_stores` para FileSearch. Sin clave, hay fallback Chroma/Gemini.
+- Configure `openai.api.key` en `local.properties` y ejecute `python -m scripts.upload_vector_stores` para File Search.

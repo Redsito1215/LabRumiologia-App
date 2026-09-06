@@ -14,10 +14,11 @@ cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env
 ```
 
-Edite `GEMINI_API_KEY`. OpenAI es opcional (`LLM_PROVIDER=openai`) y no se usa en `auto`.
+Para OpenAI File Search, edite `../local.properties` y agregue
+`openai.api.key=...` y `llm.provider=openai`.
+La clave permanece exclusivamente en el backend; nunca se empaqueta en Android.
 
 ## Subir manuales a OpenAI (FileSearch)
 
@@ -59,9 +60,8 @@ La app **no** envía documentos ni IDs de OpenAI: solo pregunta + clase detectad
 
 ## Proveedor
 
-Por defecto (`LLM_PROVIDER=auto`) se usan las guías locales y Gemini si hay
-`GEMINI_API_KEY`. OpenAI FileSearch solo con `LLM_PROVIDER=openai` y créditos.
-Modo extractos: `LLM_PROVIDER=offline`.
+Con `llm.provider=openai` se usa OpenAI File Search. Use
+`llm.provider=offline` para responder únicamente con extractos locales.
 
 ## Servidor MCP
 

@@ -34,6 +34,8 @@ backend/.env
 backend/data/chroma/
 backend/data/equipment_knowledge.local.json
 backend/.venv/
+backend/server.log
+backend/server-error.log
 
 # Guías copiadas al APK en cada build (origen: backend/data/docs)
 app/src/main/assets/docs/

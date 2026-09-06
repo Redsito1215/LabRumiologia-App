@@ -45,8 +45,6 @@ class RagService:
         if self.settings.active_provider == "openai":
             result = self._openai().chat(question, equipment_class)
             text = (result.get("answer") or "").lower()
-            if any(m in text for m in ("insufficient_quota", "no credits", "credit_balance")):
-                return self._docs_chat(question, equipment_class)
             return result
         return self._docs_chat(question, equipment_class)
 
@@ -161,9 +159,9 @@ class RagService:
             question = prompt.split("Pregunta:", 1)[1].strip()
             if ctx:
                 return (
-                    f"(Modo demo sin GEMINI_API_KEY) Según los documentos recuperados para "
+                    f"(Modo local) Según los documentos recuperados para "
                     f"«{question}»:\n\n{ctx[:900]}\n\n"
-                    "Configure GEMINI_API_KEY en backend/.env para respuestas generadas por el LLM."
+                    "Configure openai.api.key en local.properties para usar OpenAI File Search."
                 )
         return (
             "No dispongo de información suficiente en los documentos del laboratorio "

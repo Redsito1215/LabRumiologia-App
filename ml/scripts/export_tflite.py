@@ -15,12 +15,26 @@ def export_via_ultralytics(weights: Path, imgsz: int) -> Path:
 
     model = YOLO(str(weights))
     try:
-        export_path = Path(model.export(format="tflite", imgsz=imgsz, int8=False))
+        # Configuración oficial de YOLO26 para Android: postprocesado nativo y
+        # cuantización dinámica (pesos INT8, activaciones FP32).
+        export_path = Path(model.export(
+            format="litert",
+            imgsz=imgsz,
+            quantize="w8a32",
+            nms=False,
+            end2end=False,
+        ))
         return export_path
     except Exception as e:
-        print(f"Export TFLite directo falló ({e}). Intentando ONNX…", file=sys.stderr)
-        onnx_path = Path(model.export(format="onnx", imgsz=imgsz, simplify=True))
-        return convert_onnx_to_tflite(onnx_path, imgsz)
+        print(f"Export LiteRT moderno falló ({e}). Intentando TFLite FP16…", file=sys.stderr)
+        try:
+            return Path(model.export(
+                format="tflite", imgsz=imgsz, half=True, nms=False, end2end=False
+            ))
+        except Exception as legacy_error:
+            print(f"Export TFLite falló ({legacy_error}). Intentando ONNX…", file=sys.stderr)
+            onnx_path = Path(model.export(format="onnx", imgsz=imgsz, simplify=True, end2end=False))
+            return convert_onnx_to_tflite(onnx_path, imgsz)
 
 
 def convert_onnx_to_tflite(onnx_path: Path, imgsz: int) -> Path:
@@ -83,7 +97,7 @@ def convert_onnx_to_tflite(onnx_path: Path, imgsz: int) -> Path:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--weights", type=Path, default=Path("ml/models/best.pt"))
-    parser.add_argument("--imgsz", type=int, default=512)
+    parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--labels", type=Path, default=Path("ml/dataset/data.yaml"))
     parser.add_argument("--assets", type=Path, default=Path("app/src/main/assets"))
     args = parser.parse_args()

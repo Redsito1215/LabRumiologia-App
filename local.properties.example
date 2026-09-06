@@ -1,0 +1,18 @@
+# Copie este archivo como local.properties y reemplace secretoaqui.
+# local.properties está excluido de Git y nunca debe publicarse.
+sdk.dir=C:\\Users\\SU_USUARIO\\AppData\\Local\\Android\\Sdk
+
+rag.base.url=https://lab-rumiologia-backend-five.vercel.app/
+assistant.app.token=secretoaqui
+
+# Solo se usan localmente para administrar/probar el backend; no entran en la APK.
+openai.api.key=secretoaqui
+gemini.api.key=secretoaqui
+openai.model=gpt-4o-mini
+llm.provider=openai
+
+openai.file.search.top.k=2
+openai.max.output.tokens=300
+backend.requests.per.minute=10
+backend.host=0.0.0.0
+backend.port=8000

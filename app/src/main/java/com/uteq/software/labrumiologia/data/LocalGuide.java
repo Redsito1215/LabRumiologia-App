@@ -75,12 +75,9 @@ public class LocalGuide {
 
         return buildFallbackReply(
                 chunks,
-                "El asistente con IA no está configurado en esta compilación.\n\n"
-                        + "Agregue en local.properties:\n"
-                        + "gemini.api.key=SU_CLAVE_DE_AI_STUDIO\n"
-                        + "gemini.model=gemini-3.6-flash\n\n"
-                        + "Obtenga la clave gratis en: https://aistudio.google.com/apikey\n"
-                        + "Luego pulse Run en Android Studio para reinstalar.\n\n"
+                "No se pudo conectar con el backend de OpenAI File Search.\n\n"
+                        + "Compruebe que el computador y el teléfono estén en la misma red, "
+                        + "y que el servidor del backend continúe encendido.\n\n"
                         + summarizeChunks(chunks)
         );
     }

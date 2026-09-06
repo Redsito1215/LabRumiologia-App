@@ -98,12 +98,34 @@ def _output_text(response: Any) -> str:
     return "\n".join(chunks).strip()
 
 
+def _quota_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return any(code in text for code in (
+        "insufficient_quota", "credit_balance_exhausted", "no credits remaining"
+    ))
+
+
+def _quota_reply() -> dict[str, Any]:
+    return {
+        "answer": (
+            "OpenAI File Search está configurado, pero la cuenta no tiene créditos "
+            "disponibles. Agregue saldo en la facturación de OpenAI y vuelva a intentar."
+        ),
+        "sources": [],
+    }
+
+
 class OpenAIFileSearchRag:
     def __init__(self) -> None:
         settings = get_settings()
         self.model = settings.openai_model
         self.top_k = settings.top_k
-        self._client = OpenAI(api_key=settings.openai_api_key)
+        # Evita que una pérdida de red o falta de saldo deje congelada la UI móvil.
+        self._client = OpenAI(
+            api_key=settings.openai_api_key,
+            timeout=15.0,
+            max_retries=0,
+        )
 
     def chat(self, question: str, equipment_class: str | None = None) -> dict[str, Any]:
         vector_store_ids = resolve_vector_store_ids(equipment_class)
@@ -137,22 +159,28 @@ class OpenAIFileSearchRag:
         }
         try:
             response = self._client.responses.create(**kwargs)
-        except Exception:
+        except Exception as exc:
+            if _quota_error(exc):
+                return _quota_reply()
             kwargs.pop("include", None)
             kwargs.pop("tool_choice", None)
             try:
                 response = self._client.responses.create(**kwargs)
             except Exception as exc:
+                if _quota_error(exc):
+                    return _quota_reply()
                 alt = "gpt-4o-mini" if self.model != "gpt-4o-mini" else "gpt-4.1-mini"
                 kwargs["model"] = alt
                 try:
                     response = self._client.responses.create(**kwargs)
                 except Exception as exc2:
+                    if _quota_error(exc2):
+                        return _quota_reply()
                     return {
                         "answer": (
                             "No se pudo consultar OpenAI. "
                             f"Modelo «{self.model}» / «{alt}»: {exc2}. "
-                            "Compruebe saldo, OPENAI_API_KEY y que el backend esté encendido."
+                            "Compruebe saldo, openai.api.key en local.properties y que el backend esté encendido."
                         ),
                         "sources": [],
                     }

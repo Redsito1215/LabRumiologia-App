@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -73,9 +73,18 @@ def ingest() -> dict[str, Any]:
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(body: ChatRequest) -> ChatResponse:
+def chat(
+    body: ChatRequest,
+    response: Response,
+    x_equipment_id: str | None = Header(default=None, alias="X-Equipment-Id"),
+) -> ChatResponse:
+    # El encabezado evita repetir metadatos en el prompt. Nunca aceptamos IDs de
+    # archivos/vector stores arbitrarios del cliente: se resuelven en el catálogo.
+    equipment_class = x_equipment_id or body.equipment_class
+    file_ids = resolve_file_ids(equipment_class)
+    response.headers["X-Knowledge-File-Count"] = str(len(file_ids))
     try:
-        result = get_rag().chat(body.question, body.equipment_class)
+        result = get_rag().chat(body.question, equipment_class)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)[:400]) from exc
     return ChatResponse(

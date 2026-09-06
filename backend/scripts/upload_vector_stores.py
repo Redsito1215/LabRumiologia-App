@@ -16,13 +16,10 @@ import sys
 import time
 from pathlib import Path
 
-from dotenv import load_dotenv
 from openai import OpenAI
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-load_dotenv(ROOT / ".env")
-
 from app.config import get_settings  # noqa: E402
 from app.knowledge import list_doc_files, load_catalog, local_catalog_path  # noqa: E402
 
@@ -64,7 +61,7 @@ def main() -> None:
 
     settings = get_settings()
     if not settings.openai_configured and not args.dry_run:
-        raise SystemExit("Configure OPENAI_API_KEY en backend/.env")
+        raise SystemExit("Configure openai.api.key en local.properties")
 
     catalog = load_catalog()
     docs_dir = settings.docs_dir

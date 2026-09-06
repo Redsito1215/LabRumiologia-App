@@ -22,8 +22,8 @@
     <string name="model_missing">No se encontró model.tflite. Ejecute Run en Android Studio para reinstalar la app.</string>
     <string name="model_load_error">Error al cargar el modelo: %1$s</string>
     <string name="chat_title">Asistente · %1$s</string>
-    <string name="chat_intro">Puede escribir o pulsar el micrófono para hablar. Con internet, Gemini responde usando las guías de este equipo; si pidió por voz, la respuesta también se lee en audio.</string>
-    <string name="chat_consulting">Consultando las guías…</string>
+    <string name="chat_intro">Pulse el micrófono y hable con el asistente. Con internet, OpenAI File Search consulta únicamente la base documental asignada al equipo; la respuesta se reproduce por voz.</string>
+    <string name="chat_consulting">Consultando al asistente del equipo…</string>
     <string name="voice_talk">Hablar con el asistente</string>
     <string name="voice_listening">Escuchando… hable ahora</string>
     <string name="voice_processing">Procesando su voz…</string>

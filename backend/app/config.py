@@ -1,18 +1,35 @@
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(BACKEND_ROOT / ".env")
-load_dotenv()
+PROJECT_ROOT = BACKEND_ROOT.parent
+LOCAL_PROPERTIES = PROJECT_ROOT / "local.properties"
 
 
-def _path_from_env(key: str, default: Path) -> Path:
-    raw = os.getenv(key)
+def _load_local_properties() -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not LOCAL_PROPERTIES.exists():
+        return values
+    for raw in LOCAL_PROPERTIES.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith(("#", "!")) or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip('"')
+    return values
+
+
+PROPERTIES = _load_local_properties()
+
+
+def prop(key: str, default: str = "") -> str:
+    return PROPERTIES.get(key, default)
+
+
+def _path_from_property(key: str, default: Path) -> Path:
+    raw = prop(key)
     if not raw:
         return default.resolve()
     path = Path(raw)
@@ -22,18 +39,18 @@ def _path_from_env(key: str, default: Path) -> Path:
 
 
 class Settings:
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
-    openai_model: str = os.getenv("OPENAI_MODEL", "gpt-5.6")
-    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
-    host: str = os.getenv("HOST", "0.0.0.0")
-    port: int = int(os.getenv("PORT", "8000"))
-    docs_dir: Path = _path_from_env("DOCS_DIR", BACKEND_ROOT / "data" / "docs")
-    knowledge_path: Path = _path_from_env(
-        "KNOWLEDGE_PATH", BACKEND_ROOT / "data" / "equipment_knowledge.json"
+    openai_api_key: str = prop("openai.api.key")
+    openai_model: str = prop("openai.model", "gpt-4o-mini")
+    gemini_api_key: str = ""
+    host: str = prop("backend.host", "0.0.0.0")
+    port: int = int(prop("backend.port", "8000"))
+    docs_dir: Path = _path_from_property("backend.docs.dir", BACKEND_ROOT / "data" / "docs")
+    knowledge_path: Path = _path_from_property(
+        "backend.knowledge.path", BACKEND_ROOT / "data" / "equipment_knowledge.json"
     )
-    llm_model: str = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
-    top_k: int = int(os.getenv("TOP_K", "4"))
-    llm_provider: str = os.getenv("LLM_PROVIDER", "auto").strip().lower()
+    llm_model: str = ""
+    top_k: int = int(prop("openai.file.search.top.k", "4"))
+    llm_provider: str = prop("llm.provider", "openai").strip().lower()
 
     @property
     def openai_configured(self) -> bool:

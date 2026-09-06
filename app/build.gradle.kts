@@ -14,8 +14,11 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "GEMINI_API_KEY", "\"${escapeJava(geminiValue("GEMINI_API_KEY", "gemini.api.key"))}\"")
-        buildConfigField("String", "GEMINI_MODEL", "\"${escapeJava(geminiValue("LLM_MODEL", "gemini.model").ifEmpty { "gemini-3.6-flash" })}\"")
+        // Nunca empaquetar claves de proveedores en el APK. La IA se consume vía backend.
+        buildConfigField("String", "GEMINI_API_KEY", "\"\"")
+        buildConfigField("String", "GEMINI_MODEL", "\"\"")
+        buildConfigField("String", "RAG_BASE_URL", "\"${escapeJava(localValue("rag.base.url").ifEmpty { "http://10.0.2.2:8000/" })}\"")
+        buildConfigField("String", "APP_ACCESS_TOKEN", "\"${escapeJava(localValue("assistant.app.token"))}\"")
     }
 
     buildTypes {
@@ -88,26 +91,12 @@ afterEvaluate {
 fun escapeJava(value: String): String =
     value.replace("\\", "\\\\").replace("\"", "\\\"")
 
-fun geminiValue(envKey: String, localKey: String): String {
-    val envFile = rootProject.file("backend/.env")
-    if (envFile.exists()) {
-        for (raw in envFile.readLines()) {
-            val line = raw.trim()
-            if (line.startsWith("$envKey=")) {
-                val v = line.substringAfter("=").trim().trim('"')
-                if (v.isNotEmpty() && !v.startsWith("your_")) return v
-            }
-        }
-    }
+fun localValue(key: String): String {
     val local = rootProject.file("local.properties")
-    if (local.exists()) {
-        for (raw in local.readLines()) {
-            val line = raw.trim()
-            if (line.startsWith("$localKey=")) {
-                val v = line.substringAfter("=").trim().trim('"')
-                if (v.isNotEmpty()) return v
-            }
-        }
+    if (!local.exists()) return ""
+    for (raw in local.readLines()) {
+        val line = raw.trim()
+        if (line.startsWith("$key=")) return line.substringAfter("=").trim().trim('"')
     }
     return ""
 }

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Solo desarrollo local: permite conectar el emulador al backend HTTP del PC. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

@@ -42,8 +42,8 @@ public class YoloDetector implements AutoCloseable {
     public static final float CONF_THRESHOLD = 0.70f;
     public static final float IOU_THRESHOLD = 0.50f;
     public static final int MAX_DETECTIONS = 8;
-    /** Reduce cajas sueltas del modelo (~15% por lado; menos en cajas pequeñas). */
-    public static final float BOX_INSET_RATIO = 0.15f;
+    /** Ajuste visual mínimo: conserva el encuadre aprendido por YOLO. */
+    public static final float BOX_INSET_RATIO = 0.03f;
 
     private enum OutputMode { END2END_ROWS, END2END_COLS, RAW_YOLO }
 
@@ -243,8 +243,8 @@ public class YoloDetector implements AutoCloseable {
         if (rel < 0.04f) ratio *= 0.45f;      // lejos: casi no encoger
         else if (rel < 0.12f) ratio *= 0.70f; // medio
         float ix = box.width() * ratio;
-        float iyTop = box.height() * (ratio * 0.9f);
-        float iyBottom = box.height() * (ratio * 1.35f);
+        float iyTop = box.height() * ratio;
+        float iyBottom = box.height() * ratio;
         float left = clamp(box.left + ix, 0, srcWidth);
         float top = clamp(box.top + iyTop, 0, srcHeight);
         float right = clamp(box.right - ix, 0, srcWidth);
