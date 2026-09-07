@@ -1,10 +1,10 @@
 <resources>
     <string name="app_name">Lab Rumiología</string>
     <string name="detecting">Apunte de frente al equipo (≥ 70% para mostrar)</string>
-    <string name="no_detections">Sin coincidencia ≥ 70%. Acérquese un poco, ilumine bien o evite pantallas/fotos</string>
+    <string name="no_detections">Sin equipo en cámara. Apunte a una máquina del laboratorio</string>
     <string name="info_tecnica">Ver ficha técnica</string>
     <string name="detection_ready">Equipo listo. Abra la ficha para ver la foto, el manual y el asistente</string>
-    <string name="detections_ready">%1$d equipos detectados. Toque uno y abra su ficha</string>
+    <string name="detections_ready">%1$d equipos detectados. Elija uno (toque el marco o la tarjeta) y abra su ficha</string>
     <string name="equipment_photo">Foto del equipo</string>
     <string name="equipment_photo_fallback">Foto de referencia del equipo</string>
     <string name="confidence_badge">%1$d%%</string>

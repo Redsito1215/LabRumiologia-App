@@ -38,12 +38,14 @@ import java.util.Locale;
 public class YoloDetector implements AutoCloseable {
     public static final String MODEL_FILE = "model.tflite";
     public static final String LABELS_FILE = "labels.txt";
-    /** Umbral más permisivo para multi-equipo y distancias medias. */
-    public static final float CONF_THRESHOLD = 0.50f;
-    public static final float IOU_THRESHOLD = 0.50f;
-    public static final int MAX_DETECTIONS = 8;
+    /** Umbral alto para evitar fantasmas cuando no hay equipo en cámara. */
+    public static final float CONF_THRESHOLD = 0.70f;
+    /** IoU para NMS; también suprime clases distintas muy solapadas (mismo objeto). */
+    public static final float IOU_THRESHOLD = 0.45f;
+    public static final float CROSS_CLASS_IOU = 0.55f;
+    public static final int MAX_DETECTIONS = 4;
     /** Ajuste visual mínimo: conserva el encuadre aprendido por YOLO. */
-    public static final float BOX_INSET_RATIO = 0.03f;
+    public static final float BOX_INSET_RATIO = 0.02f;
 
     private enum OutputMode { END2END_ROWS, END2END_COLS, RAW_YOLO }
 
@@ -211,14 +213,17 @@ public class YoloDetector implements AutoCloseable {
     }
 
     private boolean isValidBox(RectF box) {
-        if (box.width() <= 4f || box.height() <= 4f) return false;
+        if (box.width() <= 8f || box.height() <= 8f) return false;
         float imgArea = Math.max(1, srcWidth) * (float) Math.max(1, srcHeight);
         float boxArea = box.width() * box.height();
-        // Permite cajas pequeñas (equipo lejos); descarta ruido minúsculo y cajas que llenan la escena.
-        if (boxArea < imgArea * 0.0015f) return false;
-        if (boxArea > imgArea * 0.95f) return false;
+        // Descarta cajas aplastadas (barras arriba), ruido y cajas que llenan toda la escena.
+        if (boxArea < imgArea * 0.02f) return false;
+        if (boxArea > imgArea * 0.92f) return false;
+        float relH = box.height() / Math.max(1, srcHeight);
+        float relW = box.width() / Math.max(1, srcWidth);
+        if (relH < 0.10f || relW < 0.10f) return false;
         float aspect = box.width() / Math.max(1f, box.height());
-        return aspect >= 0.15f && aspect <= 6f;
+        return aspect >= 0.25f && aspect <= 4.0f;
     }
 
     private String nameOf(String id) {
@@ -278,7 +283,10 @@ public class YoloDetector implements AutoCloseable {
         return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
     }
 
-    /** NMS por clase: no elimina un equipo vecino de otra clase. */
+    /**
+     * NMS: suprime la misma clase por IoU y también clases distintas muy solapadas
+     * (evita Daisy+GC+Estufa sobre el mismo equipo).
+     */
     private List<Detection> nms(List<Detection> detections) {
         Collections.sort(detections, (a, b) -> Float.compare(b.confidence, a.confidence));
         List<Detection> result = new ArrayList<>();
@@ -291,8 +299,9 @@ public class YoloDetector implements AutoCloseable {
             for (int j = i + 1; j < detections.size(); j++) {
                 if (removed[j]) continue;
                 Detection b = detections.get(j);
-                if (!a.classId.equals(b.classId)) continue;
-                if (iou(a.box, b.box) > IOU_THRESHOLD) {
+                float overlap = iou(a.box, b.box);
+                boolean sameClass = a.classId.equals(b.classId);
+                if ((sameClass && overlap > IOU_THRESHOLD) || (!sameClass && overlap > CROSS_CLASS_IOU)) {
                     removed[j] = true;
                 }
             }

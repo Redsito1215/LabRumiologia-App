@@ -9,14 +9,16 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Asociacion IoU + misma clase entre frames, con suavizado EMA de cajas.
- * Mantiene IDs estables para que el overlay "siga" al equipo.
+ * Tracking corto: suaviza la caja (EMA) y mantiene el ID mientras el equipo sigue en escena.
+ * No conserva detecciones "fantasma" cuando el modelo ya no ve nada.
  */
 public class DetectionTracker {
-    private static final float MATCH_IOU = 0.25f;
-    private static final float EMA_ALPHA = 0.55f;
-    private static final int MAX_MISSED = 10;
-    private static final int MAX_TRACKS = 12;
+    private static final float MATCH_IOU = 0.20f;
+    private static final float EMA_ALPHA = 0.65f;
+    /** Frames sin match antes de borrar el track. */
+    private static final int MAX_MISSED = 3;
+    private static final int MAX_TRACKS = 4;
+    private static final float MIN_TRACK_CONF = 0.55f;
 
     private static final class Track {
         final int id;
@@ -54,7 +56,6 @@ public class DetectionTracker {
         List<Detection> incoming = detections != null ? detections : new ArrayList<>();
         boolean[] used = new boolean[incoming.size()];
 
-        // Emparejar por clase + IoU maximo
         for (Track track : tracks) {
             int bestIdx = -1;
             float bestIou = MATCH_IOU;
@@ -79,14 +80,14 @@ public class DetectionTracker {
             }
         }
 
-        // Nuevos tracks
         for (int i = 0; i < incoming.size(); i++) {
             if (used[i]) continue;
             if (tracks.size() >= MAX_TRACKS) break;
-            tracks.add(new Track(nextId++, incoming.get(i)));
+            Detection d = incoming.get(i);
+            if (d.confidence < MIN_TRACK_CONF) continue;
+            tracks.add(new Track(nextId++, d));
         }
 
-        // Envejecer / eliminar
         Iterator<Track> it = tracks.iterator();
         while (it.hasNext()) {
             Track t = it.next();
@@ -98,16 +99,16 @@ public class DetectionTracker {
             }
         }
 
-        List<Detection> out = new ArrayList<>(tracks.size());
+        // Solo devolver tracks vistos en este frame (sin fantasmas).
+        List<Detection> out = new ArrayList<>();
         for (Track t : tracks) {
-            // Confianza decae levemente si se perdio el frame
-            float conf = t.updated ? t.confidence : t.confidence * 0.92f;
-            out.add(new Detection(t.classId, t.label, conf, new RectF(t.box)));
+            if (!t.updated) continue;
+            if (t.confidence < MIN_TRACK_CONF) continue;
+            out.add(new Detection(t.classId, t.label, t.confidence, new RectF(t.box)));
         }
         return out;
     }
 
-    /** Conserva seleccion por classId cuando cambia el orden de tracks. */
     public static int indexOfClass(List<Detection> list, String classId) {
         if (classId == null || list == null) return -1;
         for (int i = 0; i < list.size(); i++) {

@@ -79,7 +79,9 @@ public class DetectionActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         btnInfo = findViewById(R.id.btnInfo);
         detectionsList = findViewById(R.id.detectionsList);
-        detectionsList.setLayoutManager(new LinearLayoutManager(this));
+        detectionsList.setLayoutManager(
+                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        );
         adapter = new DetectionAdapter(this::selectDetection);
         detectionsList.setAdapter(adapter);
         detectionsList.setVisibility(View.GONE);
@@ -152,6 +154,7 @@ public class DetectionActivity extends AppCompatActivity {
         ImageAnalysis analysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                .setTargetResolution(new android.util.Size(1280, 720))
                 .build();
         analysis.setAnalyzer(analysisExecutor, this::analyzeFrame);
 
@@ -183,11 +186,17 @@ public class DetectionActivity extends AppCompatActivity {
             }
             List<Detection> raw = detector.detect(bitmap);
             List<Detection> detections = tracker.update(raw);
+            if (raw.isEmpty()) {
+                // Sin evidencia del modelo: limpiar selección y no arrastrar nombres viejos.
+                tracker.reset();
+                detections = new ArrayList<>();
+            }
             int w = detector.getSourceWidth();
             int h = detector.getSourceHeight();
             bitmap.recycle();
+            List<Detection> finalDetections = detections;
             runOnUiThread(() -> {
-                if (!isDestroyed()) showDetections(detections, w, h);
+                if (!isDestroyed()) showDetections(finalDetections, w, h);
             });
         } catch (Exception e) {
             runOnUiThread(() -> statusText.setText("Error de inferencia: " + e.getMessage()));
@@ -237,25 +246,26 @@ public class DetectionActivity extends AppCompatActivity {
             selectedIndex = 0;
             selectedClassId = latestDetections.get(0).classId;
         }
-        btnInfo.setEnabled(selectedIndex >= 0);
+        if (latestDetections.isEmpty()) {
+            selectedIndex = -1;
+            selectedClassId = null;
+            btnInfo.setEnabled(false);
+            statusText.setText(R.string.no_detections);
+        } else if (latestDetections.size() == 1) {
+            btnInfo.setEnabled(selectedIndex >= 0);
+            statusText.setText(R.string.detection_ready);
+        } else {
+            btnInfo.setEnabled(selectedIndex >= 0);
+            statusText.setText(getString(R.string.detections_ready, latestDetections.size()));
+        }
         overlayView.setImageSize(srcW, srcH);
         overlayView.setDetections(latestDetections, selectedIndex);
         adapter.submit(latestDetections, selectedIndex);
         detectionsList.setVisibility(latestDetections.isEmpty() ? View.GONE : View.VISIBLE);
         ViewGroup.LayoutParams lp = detectionsList.getLayoutParams();
         if (lp != null) {
-            float density = getResources().getDisplayMetrics().density;
-            lp.height = latestDetections.size() > 2
-                    ? Math.round(168 * density)
-                    : ViewGroup.LayoutParams.WRAP_CONTENT;
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             detectionsList.setLayoutParams(lp);
-        }
-        if (latestDetections.isEmpty()) {
-            statusText.setText(R.string.no_detections);
-        } else if (latestDetections.size() == 1) {
-            statusText.setText(R.string.detection_ready);
-        } else {
-            statusText.setText(getString(R.string.detections_ready, latestDetections.size()));
         }
     }
 
