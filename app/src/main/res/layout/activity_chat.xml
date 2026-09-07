@@ -46,42 +46,6 @@
         android:background="@color/white"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="10dp"
-        android:paddingTop="0dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="4dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnVoice"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:minWidth="0dp"
-            android:text="@string/voice_change"
-            android:textAllCaps="false"
-            android:textColor="@color/primary"
-            android:textSize="12sp" />
-
-        <TextView
-            android:id="@+id/voiceName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:paddingStart="4dp"
-            android:textColor="@color/on_surface_muted"
-            android:textSize="12sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
         android:padding="10dp">
 
         <com.google.android.material.button.MaterialButton

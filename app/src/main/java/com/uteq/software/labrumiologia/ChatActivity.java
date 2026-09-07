@@ -2,7 +2,6 @@ package com.uteq.software.labrumiologia;
 
 import android.Manifest;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -38,17 +37,13 @@ import java.util.concurrent.Executors;
 
 public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
     private static final int REQ_MIC = 210;
-    private static final String PREFS = "assistant_voice";
-    private static final String KEY_VOICE = "voice_name";
 
     private String equipmentId;
     private ChatAdapter adapter;
     private TextInputEditText input;
     private MaterialButton btnSend;
     private MaterialButton btnMic;
-    private MaterialButton btnVoice;
     private TextView voiceStatus;
-    private TextView voiceName;
     private AssistantRepository assistant;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
@@ -58,7 +53,6 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private boolean listening;
     private boolean voiceMode;
     private final List<Voice> spanishVoices = new ArrayList<>();
-    private int voiceIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,16 +73,13 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         input = findViewById(R.id.chatInput);
         btnSend = findViewById(R.id.btnSend);
         btnMic = findViewById(R.id.btnMic);
-        btnVoice = findViewById(R.id.btnVoice);
         voiceStatus = findViewById(R.id.voiceStatus);
-        voiceName = findViewById(R.id.voiceName);
 
         btnSend.setOnClickListener(v -> {
             voiceMode = false;
             sendMessage(textFromInput());
         });
         btnMic.setOnClickListener(v -> toggleVoice());
-        btnVoice.setOnClickListener(v -> cycleVoice());
         adapter.add(new ChatAdapter.Message("Sistema", getString(R.string.chat_intro), null));
 
         tts = new TextToSpeech(this, this);
@@ -103,7 +94,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         tts.setSpeechRate(0.95f);
         tts.setPitch(1.0f);
         loadSpanishVoices();
-        applySavedOrBestVoice();
+        applyFemaleVoice();
     }
 
     private void loadSpanishVoices() {
@@ -122,24 +113,9 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 .thenComparing(Voice::getName));
     }
 
-    private void applySavedOrBestVoice() {
-        if (spanishVoices.isEmpty()) {
-            voiceName.setText(getString(R.string.voice_selected, "predeterminada"));
-            return;
-        }
-        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        String saved = prefs.getString(KEY_VOICE, null);
-        int idx = -1;
-        if (saved != null) {
-            for (int i = 0; i < spanishVoices.size(); i++) {
-                if (saved.equals(spanishVoices.get(i).getName())) {
-                    idx = i;
-                    break;
-                }
-            }
-        }
-        if (idx < 0) idx = preferredVoiceIndex();
-        setVoiceAt(idx, false);
+    private void applyFemaleVoice() {
+        if (spanishVoices.isEmpty()) return;
+        tts.setVoice(spanishVoices.get(preferredVoiceIndex()));
     }
 
     /** Prioriza es-ES / es-MX y voces con nombre femenino habituales del motor. */
@@ -161,40 +137,6 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
             if (tag.startsWith("es-es") || tag.startsWith("es-mx")) return i;
         }
         return 0;
-    }
-
-    private void cycleVoice() {
-        if (!ttsReady || tts == null) return;
-        if (spanishVoices.size() <= 1) {
-            Toast.makeText(this, R.string.voice_none, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        setVoiceAt((voiceIndex + 1) % spanishVoices.size(), true);
-    }
-
-    private void setVoiceAt(int index, boolean preview) {
-        if (tts == null || spanishVoices.isEmpty()) return;
-        voiceIndex = Math.max(0, Math.min(index, spanishVoices.size() - 1));
-        Voice voice = spanishVoices.get(voiceIndex);
-        tts.setVoice(voice);
-        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-                .putString(KEY_VOICE, voice.getName())
-                .apply();
-        voiceName.setText(getString(R.string.voice_selected, friendlyVoiceLabel(voice)));
-        if (preview) {
-            tts.speak(getString(R.string.voice_preview), TextToSpeech.QUEUE_FLUSH, null, "voice_preview");
-            setVoiceStatus(getString(R.string.voice_selected, friendlyVoiceLabel(voice)));
-        }
-    }
-
-    private static String friendlyVoiceLabel(Voice voice) {
-        String tag = voice.getLocale().toLanguageTag();
-        String name = voice.getName();
-        // Acorta nombres largos del motor (Google / Samsung).
-        int slash = name.lastIndexOf('/');
-        if (slash >= 0 && slash + 1 < name.length()) name = name.substring(slash + 1);
-        if (name.length() > 28) name = name.substring(0, 28) + "…";
-        return tag + " · " + name;
     }
 
     private void setupSpeechRecognizer() {
@@ -341,10 +283,15 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 btnSend.setEnabled(true);
                 btnMic.setEnabled(true);
                 adapter.removeLastIfPlaceholder();
-                adapter.add(new ChatAdapter.Message("Asistente", reply.answer, reply.sources));
+                adapter.add(new ChatAdapter.Message("Asistente", withoutSources(reply.answer), null));
                 if (speakReply) speak(reply.answer);
             });
         });
+    }
+
+    private static String withoutSources(String text) {
+        if (text == null) return "";
+        return text.replaceFirst("(?is)\\n\\s*(fuente|fuentes|sources?)\\s*:.*$", "").trim();
     }
 
     private void speak(String text) {

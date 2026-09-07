@@ -230,7 +230,7 @@ public class DetectionActivity extends AppCompatActivity {
 
     private void showDetections(List<Detection> detections, int srcW, int srcH) {
         latestDetections.clear();
-        latestDetections.addAll(detections);
+        latestDetections.addAll(visibleDetections(detections, srcW, srcH));
         if (selectedClassId != null) {
             int byClass = DetectionTracker.indexOfClass(latestDetections, selectedClassId);
             selectedIndex = byClass >= 0 ? byClass : (latestDetections.isEmpty() ? -1 : 0);
@@ -267,6 +267,28 @@ public class DetectionActivity extends AppCompatActivity {
             lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             detectionsList.setLayoutParams(lp);
         }
+    }
+
+    /** Descarta cajas que FILL_CENTER deja casi totalmente fuera de la vista previa. */
+    private List<Detection> visibleDetections(List<Detection> detections, int srcW, int srcH) {
+        List<Detection> visible = new ArrayList<>();
+        float viewW = overlayView.getWidth();
+        float viewH = overlayView.getHeight();
+        if (viewW <= 0 || viewH <= 0 || srcW <= 0 || srcH <= 0) return detections;
+        float scale = Math.max(viewW / srcW, viewH / srcH);
+        float visibleW = viewW / scale;
+        float visibleH = viewH / scale;
+        float left = (srcW - visibleW) * 0.5f;
+        float top = (srcH - visibleH) * 0.5f;
+        android.graphics.RectF viewport = new android.graphics.RectF(left, top, left + visibleW, top + visibleH);
+        for (Detection d : detections) {
+            if (d.box == null) continue;
+            android.graphics.RectF intersection = new android.graphics.RectF(d.box);
+            if (!intersection.intersect(viewport)) continue;
+            float area = Math.max(1f, d.box.width() * d.box.height());
+            if ((intersection.width() * intersection.height()) / area >= 0.60f) visible.add(d);
+        }
+        return visible;
     }
 
     @Override

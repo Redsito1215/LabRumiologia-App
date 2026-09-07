@@ -43,6 +43,8 @@ public class YoloDetector implements AutoCloseable {
     /** IoU para NMS; también suprime clases distintas muy solapadas (mismo objeto). */
     public static final float IOU_THRESHOLD = 0.45f;
     public static final float CROSS_CLASS_IOU = 0.55f;
+    /** Suprime una etiqueta alternativa cuando ambas cajas describen el mismo objeto. */
+    public static final float CROSS_CLASS_CONTAINMENT = 0.72f;
     public static final int MAX_DETECTIONS = 4;
     /** Ajuste visual mínimo: conserva el encuadre aprendido por YOLO. */
     public static final float BOX_INSET_RATIO = 0.02f;
@@ -300,8 +302,11 @@ public class YoloDetector implements AutoCloseable {
                 if (removed[j]) continue;
                 Detection b = detections.get(j);
                 float overlap = iou(a.box, b.box);
+                float containment = intersectionOverSmaller(a.box, b.box);
                 boolean sameClass = a.classId.equals(b.classId);
-                if ((sameClass && overlap > IOU_THRESHOLD) || (!sameClass && overlap > CROSS_CLASS_IOU)) {
+                if ((sameClass && overlap > IOU_THRESHOLD)
+                        || (!sameClass && (overlap > CROSS_CLASS_IOU
+                        || containment > CROSS_CLASS_CONTAINMENT))) {
                     removed[j] = true;
                 }
             }
@@ -317,6 +322,16 @@ public class YoloDetector implements AutoCloseable {
         float inter = Math.max(0, interRight - interLeft) * Math.max(0, interBottom - interTop);
         float union = a.width() * a.height() + b.width() * b.height() - inter;
         return union <= 0 ? 0 : inter / union;
+    }
+
+    private static float intersectionOverSmaller(RectF a, RectF b) {
+        float interLeft = Math.max(a.left, b.left);
+        float interTop = Math.max(a.top, b.top);
+        float interRight = Math.min(a.right, b.right);
+        float interBottom = Math.min(a.bottom, b.bottom);
+        float inter = Math.max(0, interRight - interLeft) * Math.max(0, interBottom - interTop);
+        float smaller = Math.min(a.width() * a.height(), b.width() * b.height());
+        return smaller <= 0 ? 0 : inter / smaller;
     }
 
     private Bitmap letterbox(Bitmap src) {

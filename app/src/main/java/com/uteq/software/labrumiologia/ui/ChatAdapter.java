@@ -60,12 +60,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.Holder> {
         holder.body.setText(m.body);
         boolean user = "Usted".equals(m.role);
         holder.card.setBackgroundResource(user ? R.drawable.bg_bubble_user : R.drawable.bg_bubble_assistant);
-        if (m.sources != null && !m.sources.isEmpty()) {
-            holder.sources.setVisibility(View.VISIBLE);
-            holder.sources.setText(m.sources);
-        } else {
-            holder.sources.setVisibility(View.GONE);
-        }
+        holder.sources.setVisibility(View.GONE);
     }
 
     @Override

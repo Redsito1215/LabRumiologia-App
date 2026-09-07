@@ -19,6 +19,8 @@ public class DetectionTracker {
     private static final int MAX_MISSED = 3;
     private static final int MAX_TRACKS = 4;
     private static final float MIN_TRACK_CONF = 0.55f;
+    /** Exige varios fotogramas consecutivos antes de mostrar un equipo. */
+    private static final int MIN_CONFIRMED_HITS = 3;
 
     private static final class Track {
         final int id;
@@ -28,6 +30,7 @@ public class DetectionTracker {
         final RectF box = new RectF();
         int missed;
         boolean updated;
+        int hits;
 
         Track(int id, Detection d) {
             this.id = id;
@@ -37,6 +40,7 @@ public class DetectionTracker {
             this.box.set(d.box);
             this.missed = 0;
             this.updated = true;
+            this.hits = 1;
         }
     }
 
@@ -77,6 +81,7 @@ public class DetectionTracker {
                 track.label = d.label;
                 track.missed = 0;
                 track.updated = true;
+                track.hits++;
             }
         }
 
@@ -103,7 +108,7 @@ public class DetectionTracker {
         List<Detection> out = new ArrayList<>();
         for (Track t : tracks) {
             if (!t.updated) continue;
-            if (t.confidence < MIN_TRACK_CONF) continue;
+            if (t.confidence < MIN_TRACK_CONF || t.hits < MIN_CONFIRMED_HITS) continue;
             out.add(new Detection(t.classId, t.label, t.confidence, new RectF(t.box)));
         }
         return out;
