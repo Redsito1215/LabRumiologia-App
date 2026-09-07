@@ -1,10 +1,9 @@
 # Entrenamiento YOLO — Laboratorio de Rumiología
 #
-# Flujo: Label Studio (bounding boxes) → export YOLO → este cuaderno.
-# Checkpoint por defecto: YOLO26n (Ultralytics). El enunciado cita YOLOv15;
-# Ultralytics no publica ese nombre; la API de train() es la misma.
-#
-#   python ml/scripts/train_yolo.py
+# Preferir Colab: ml/notebooks/train_yolo_colab.ipynb
+# Local:
+#   python ml/scripts/build_yolo_dataset.py
+#   python ml/scripts/train_yolo.py --data ml/dataset/data.yaml
 #   python ml/scripts/export_tflite.py
 
 from pathlib import Path
@@ -16,15 +15,27 @@ PROJECT = Path("../runs")
 MODELS = Path("../models")
 MODELS.mkdir(parents=True, exist_ok=True)
 
-model = YOLO("yolo26n.pt")
+model = None
+for name in ("yolo26m.pt", "yolo26s.pt", "yolo26n.pt", "yolov8n.pt"):
+    try:
+        model = YOLO(name)
+        print("Base:", name)
+        break
+    except Exception as exc:
+        print(name, "->", exc)
+
 results = model.train(
     data=str(DATA.resolve()),
-    epochs=50,
+    epochs=120,
     imgsz=640,
     batch=8,
     project=str(PROJECT),
     name="rumiologia",
     exist_ok=True,
+    patience=40,
+    cos_lr=True,
+    optimizer="AdamW",
+    lr0=0.001,
 )
 
 best = Path(results.save_dir) / "weights" / "best.pt"

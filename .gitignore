@@ -37,6 +37,18 @@ backend/.venv/
 backend/server.log
 backend/server-error.log
 
+# Dataset packs for Colab (large)
+ml/exports/*.zip
+ml/exports/colab_chunks/
+ml/exports/upload_parts/
+ml/exports/_chunk_payload.txt
+ml/exports/make_upload_parts.py
+ml/exports/colab_artifacts/*
+!ml/exports/colab_artifacts/README.txt
+!ml/exports/colab_artifacts/.gitkeep
+ml/dataset/all/
+ml/dataset/yolo_ls/**/*.cache
+
 # Guías copiadas al APK en cada build (origen: backend/data/docs)
 app/src/main/assets/docs/
 

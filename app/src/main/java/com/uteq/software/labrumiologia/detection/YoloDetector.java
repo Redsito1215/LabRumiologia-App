@@ -38,8 +38,8 @@ import java.util.Locale;
 public class YoloDetector implements AutoCloseable {
     public static final String MODEL_FILE = "model.tflite";
     public static final String LABELS_FILE = "labels.txt";
-    /** Umbral: un poco más permisivo para equipos lejanos sin abrir falsos positivos. */
-    public static final float CONF_THRESHOLD = 0.70f;
+    /** Umbral más permisivo para multi-equipo y distancias medias. */
+    public static final float CONF_THRESHOLD = 0.50f;
     public static final float IOU_THRESHOLD = 0.50f;
     public static final int MAX_DETECTIONS = 8;
     /** Ajuste visual mínimo: conserva el encuadre aprendido por YOLO. */
@@ -278,6 +278,7 @@ public class YoloDetector implements AutoCloseable {
         return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
     }
 
+    /** NMS por clase: no elimina un equipo vecino de otra clase. */
     private List<Detection> nms(List<Detection> detections) {
         Collections.sort(detections, (a, b) -> Float.compare(b.confidence, a.confidence));
         List<Detection> result = new ArrayList<>();
@@ -289,7 +290,9 @@ public class YoloDetector implements AutoCloseable {
             if (result.size() >= MAX_DETECTIONS) break;
             for (int j = i + 1; j < detections.size(); j++) {
                 if (removed[j]) continue;
-                if (iou(a.box, detections.get(j).box) > IOU_THRESHOLD) {
+                Detection b = detections.get(j);
+                if (!a.classId.equals(b.classId)) continue;
+                if (iou(a.box, b.box) > IOU_THRESHOLD) {
                     removed[j] = true;
                 }
             }

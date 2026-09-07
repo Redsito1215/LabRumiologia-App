@@ -198,7 +198,11 @@ def import_json(json_path: Path, images_dir: Path, out_images: Path, out_labels:
             print(f"Imagen no encontrada: {filename}")
             continue
         lines = []
-        for ann in task.get("annotations") or []:
+        # Preferir anotaciones humanas; si no hay, usar predicciones (bootstrap / content_box).
+        sources = list(task.get("annotations") or [])
+        if not any((a.get("result") or []) for a in sources):
+            sources = list(task.get("predictions") or [])
+        for ann in sources:
             for result in ann.get("result") or []:
                 if result.get("type") not in {"rectanglelabels", "rectangle"}:
                     continue

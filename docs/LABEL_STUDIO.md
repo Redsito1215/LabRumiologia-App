@@ -13,6 +13,21 @@ Este proyecto cumple el enunciado así:
 
 ---
 
+## Atajo actual (recomendado)
+
+Si ya tiene fotos en `ml/labelstudio/images/`:
+
+```bash
+python ml/scripts/build_yolo_dataset.py
+python ml/scripts/package_colab_dataset.py
+```
+
+Esto genera cajas propuestas (mejores que el bootstrap centrado), composiciones multi-equipo,
+`yolo_ls` con las 11 clases y el ZIP para Colab. Luego revise/ajuste en Label Studio y entrene con
+`ml/notebooks/train_yolo_colab.ipynb`. Artefactos → `python ml/scripts/integrate_colab_artifacts.py`.
+
+---
+
 ## Requisitos
 
 ```bash

@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.uteq.software.labrumiologia.detection.DetectionTracker;
 import com.uteq.software.labrumiologia.detection.YoloDetector;
 import com.uteq.software.labrumiologia.model.Detection;
 import com.uteq.software.labrumiologia.ui.DetectionAdapter;
@@ -58,11 +59,13 @@ public class DetectionActivity extends AppCompatActivity {
     private RecyclerView detectionsList;
 
     private YoloDetector detector;
+    private final DetectionTracker tracker = new DetectionTracker();
     private ExecutorService analysisExecutor;
     private final AtomicBoolean busy = new AtomicBoolean(false);
 
     private final List<Detection> latestDetections = new ArrayList<>();
     private int selectedIndex = -1;
+    private String selectedClassId = null;
     private boolean modelAvailable = false;
 
     @Override
@@ -110,6 +113,7 @@ public class DetectionActivity extends AppCompatActivity {
 
     private void selectDetection(Detection detection, int index) {
         selectedIndex = index;
+        selectedClassId = detection != null ? detection.classId : null;
         overlayView.setSelectedIndex(index);
         adapter.submit(new ArrayList<>(latestDetections), selectedIndex);
         btnInfo.setEnabled(true);
@@ -177,7 +181,8 @@ public class DetectionActivity extends AppCompatActivity {
                 if (rotated != bitmap) bitmap.recycle();
                 bitmap = rotated;
             }
-            List<Detection> detections = detector.detect(bitmap);
+            List<Detection> raw = detector.detect(bitmap);
+            List<Detection> detections = tracker.update(raw);
             int w = detector.getSourceWidth();
             int h = detector.getSourceHeight();
             bitmap.recycle();
@@ -217,10 +222,20 @@ public class DetectionActivity extends AppCompatActivity {
     private void showDetections(List<Detection> detections, int srcW, int srcH) {
         latestDetections.clear();
         latestDetections.addAll(detections);
-        if (selectedIndex >= latestDetections.size()) {
+        if (selectedClassId != null) {
+            int byClass = DetectionTracker.indexOfClass(latestDetections, selectedClassId);
+            selectedIndex = byClass >= 0 ? byClass : (latestDetections.isEmpty() ? -1 : 0);
+            if (selectedIndex >= 0) {
+                selectedClassId = latestDetections.get(selectedIndex).classId;
+            } else {
+                selectedClassId = null;
+            }
+        } else if (selectedIndex >= latestDetections.size()) {
             selectedIndex = latestDetections.isEmpty() ? -1 : 0;
+            selectedClassId = selectedIndex >= 0 ? latestDetections.get(selectedIndex).classId : null;
         } else if (selectedIndex < 0 && !latestDetections.isEmpty()) {
             selectedIndex = 0;
+            selectedClassId = latestDetections.get(0).classId;
         }
         btnInfo.setEnabled(selectedIndex >= 0);
         overlayView.setImageSize(srcW, srcH);

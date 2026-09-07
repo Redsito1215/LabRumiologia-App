@@ -41,7 +41,7 @@ def _path_from_property(key: str, default: Path) -> Path:
 class Settings:
     openai_api_key: str = prop("openai.api.key")
     openai_model: str = prop("openai.model", "gpt-4o-mini")
-    gemini_api_key: str = ""
+    gemini_api_key: str = prop("gemini.api.key")
     host: str = prop("backend.host", "0.0.0.0")
     port: int = int(prop("backend.port", "8000"))
     docs_dir: Path = _path_from_property("backend.docs.dir", BACKEND_ROOT / "data" / "docs")
