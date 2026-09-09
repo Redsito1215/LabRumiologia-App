@@ -2,89 +2,56 @@
   {
     "id": "ankom_daisy_ii",
     "name": "Incubadora ANKOM Daisy II",
-    "function": "Incubación y agitación a 39,5 °C para digestibilidad in vitro de forrajes (inóculo ruminal o enzimático) en bolsas filtro F57. Hasta 4 frascos y más de 100 muestras por lote.",
+    "brand": "ANKOM Technology",
+    "description": "Equipo de alta precisión diseñado para la simulación de digestibilidad ruminal in vitro, permitiendo el procesamiento simultáneo de múltiples muestras en condiciones controladas.",
+    "tempRange": "39.5 °C",
+    "function": "Incubación y agitación a 39,5 °C para digestibilidad in vitro de forrajes (inóculo ruminal o enzimático) en bolsas filtro F57.",
     "components": ["Cámara de incubación", "Rotor", "4 frascos de digestión", "Controlador de temperatura", "Temporizador"],
-    "usage": "Pesar y sellar bolsas F57 (AIE-200), cargar frascos con buffer e inóculo, purgar con CO2 ~30 s, incubar el tiempo de la práctica (a menudo 24–48 h) a 39,5 °C. Al terminar, enjuagar, secar y pesar.",
-    "safety": "Material biológico ruminal: bata y guantes. No incubar material no autorizado. Superficies calientes. No forzar el controlador."
+    "usage": "Pesar y sellar bolsas F57 (AIE-200), cargar frascos con buffer e inóculo, purgar con CO2 ~30 s, incubar el tiempo de la práctica.",
+    "safety": "Material biológico ruminal: bata y guantes. Superficies calientes."
   },
   {
     "id": "aquasearcher",
     "name": "OHAUS AquaSearcher AB33",
-    "function": "Medición de pH, mV/ORP y, en AB33M1, conductividad de fluido ruminal y soluciones. Indicador clave del ambiente del rumen.",
-    "components": ["Consola táctil", "Brazo porta-electrodo", "Electrodo de pH", "Sonda de conductividad (si aplica)", "Buffers de calibración"],
-    "usage": "Calibrar con buffers (4 / 7 / 10), enjuagar el electrodo, sumergir sin tocar el fondo, esperar lectura estable. Dejar el electrodo en solución de almacenamiento; nunca seco.",
-    "safety": "Guantes: muestra biológica y buffers. No golpear el bulbo de vidrio. No mojar la consola ni el conector."
+    "brand": "OHAUS",
+    "description": "Medidor de parámetros electroquímicos de sobremesa, ideal para análisis precisos de pH y conductividad en muestras de laboratorio.",
+    "tempRange": "N/A",
+    "function": "Medición de pH, mV/ORP y, en AB33M1, conductividad de fluido ruminal y soluciones.",
+    "components": ["Consola táctil", "Brazo porta-electrodo", "Electrodo de pH", "Sonda de conductividad", "Buffers de calibración"],
+    "usage": "Calibrar con buffers, enjuagar el electrodo, sumergir sin tocar el fondo, esperar lectura estable.",
+    "safety": "Guantes: muestra biológica y buffers. No golpear el bulbo de vidrio."
   },
   {
     "id": "ohaus_pr",
     "name": "Balanza OHAUS PR Series",
-    "function": "Pesaje analítico de muestras, reactivos y bolsas filtro en ensayos cuantitativos (fibra, materia seca, digestibilidad).",
+    "brand": "OHAUS",
+    "description": "Balanza analítica de precisión para aplicaciones esenciales de pesaje, ofreciendo exactitud y repetibilidad en entornos industriales y educativos.",
+    "tempRange": "N/A",
+    "function": "Pesaje analítico de muestras, reactivos y bolsas filtro en ensayos cuantitativos.",
     "components": ["Plato", "Cámara antiviento", "Display LCD", "Teclas Zero / Tare / Cal", "Nivel de burbuja"],
-    "usage": "Nivelar, encender, cerrar puertas, tarar y pesar sin corrientes de aire. Calibrar solo con pesas y autorización del responsable.",
-    "safety": "No sobrecargar ni mover el equipo calibrado. Evitar corrosivos sobre el plato. Limpiar derrames de inmediato."
-  },
-  {
-    "id": "contador_colonias",
-    "name": "Contador de colonias POL-EKO LKB 2002",
-    "function": "Recuento de colonias en placas de Petri con campo iluminado, cuadrícula, lupa y display digital. No identifica especies.",
-    "components": ["Campo cuadriculado iluminado", "Lupa en brazo flexible", "Display LED", "Marcador / toque de conteo"],
-    "usage": "Resetear el display, colocar la placa, enfocar y contar por cuadrantes tocando cada colonia una vez. Aplicar el factor de dilución de la práctica (UFC).",
-    "safety": "Placas = material biológico: bata y guantes. No abrir cultivos no autorizados. Residuos según bioseguridad UTEQ."
-  },
-  {
-    "id": "ohaus_pa214",
-    "name": "Balanza OHAUS Pioneer PA214",
-    "function": "Pesaje analítico de alta resolución (típico 210 g × 0,1 mg). Preferible para bolsas filtro y alícuotas pequeñas.",
-    "components": ["Draft shield de vidrio", "Plato circular", "Display", "Teclas Tare y Print/Cal", "Nivel de burbuja"],
-    "usage": "Nivelar, esperar cero estable, cerrar puertas, tarar y pesar. No mezclar esta balanza con la PR en el mismo ensayo salvo indicación del docente.",
-    "safety": "No sobrecargar ni arrastrar el equipo. Calibrar solo con autorización. Evitar líquidos sobre el mecanismo."
-  },
-  {
-    "id": "banio_maria_memmert",
-    "name": "Baño María Memmert (WNB/WNE)",
-    "function": "Calentamiento indirecto en agua a temperatura controlada (buffers, muestras). No sustituye a la incubadora Daisy.",
-    "components": ["Tina de acero", "Tapa", "Controlador digital PV/SV", "Perilla SET"],
-    "usage": "Llenar con agua hasta cubrir resistencias, ajustar setpoint, esperar que PV ≈ SV, colocar recipientes estables. Nunca operar en seco.",
-    "safety": "Agua y vapor calientes; riesgo eléctrico. Desconectar antes de vaciar. No añadir muestras ni ácidos al agua del baño."
-  },
-  {
-    "id": "ankom_a200",
-    "name": "ANKOM 200 Fiber Analyzer",
-    "function": "Determinación de ADF, NDF y fibra cruda en forrajes con bolsas filtro (hasta 24 muestras por corrida).",
-    "components": ["Vaso de digestión", "Tapa con palanca", "HEAT / AGITATE", "Controlador ATHENA", "Manguera de escape"],
-    "usage": "Pesar ~0,5 g en bolsa sellada, cargar el vaso, cerrar, activar calor y agitación según el método. Luego enjuagar, secar, desecar y pesar.",
-    "safety": "Ácidos y detergentes corrosivos: bata, guantes y gafas. Superficie caliente. No abrir en operación. Manguera de escape siempre conectada."
-  },
-  {
-    "id": "shimadzu_gc2014",
-    "name": "Shimadzu GC-2014",
-    "function": "Cromatografía de gases para compuestos volátiles (en rumiología, a menudo AGV: acético, propiónico, butírico). Solo con método validado del lab.",
-    "components": ["Horno de columna", "Inyector", "Detector", "Teclado START/STOP", "Autosampler", "Líneas de gases"],
-    "usage": "El estudiante prepara viales y observa. Gases, temperaturas y START/STOP: solo el docente o responsable. No cambiar métodos ni columna.",
-    "safety": "Gases a presión (H2 inflamable si hay FID), altas temperaturas. Cilindros asegurados. No operar sin supervisión."
+    "usage": "Nivelar, encender, cerrar puertas, tarar y pesar sin corrientes de aire.",
+    "safety": "No sobrecargar ni mover el equipo calibrado. Limpiar derrames de inmediato."
   },
   {
     "id": "estufa_secado",
     "name": "Estufa de secado",
-    "function": "Secado de muestras, bolsas filtro y vidrio a temperatura controlada (materia seca o masa constante). Setpoint según la práctica (p. ej. 55–65 °C o 105 °C).",
+    "brand": "Memmert",
+    "description": "Equipo utilizado para el secado de muestras, bolsas filtro y material de vidrio a temperatura controlada (materia seca o masa constante).",
+    "tempRange": "55 - 65 °C",
+    "function": "Secar muestras, bolsas filtro y material de vidrio.",
     "components": ["Cámara de acero", "Puerta", "Bandejas", "Controlador PID (PV/SV)"],
-    "usage": "Colocar material en capa fina, fijar SV, esperar PV, secar el tiempo indicado. Enfriar en desecador y pesar en OHAUS. No abrir a cada rato.",
-    "safety": "Quemaduras. Prohibido introducir solventes inflamables. No bloquear ventilación ni dejar plásticos sobre el gabinete."
+    "usage": "Colocar material en capa fina, fijar SV, esperar PV, secar el tiempo indicado.",
+    "safety": "Quemaduras. Prohibido introducir solventes inflamables."
   },
   {
-    "id": "selladora_aie200",
-    "name": "Selladora de impulso AIE-200",
-    "function": "Sellado por impulso de bolsas filtro ANKOM (Daisy y A200) y bolsas de muestra. 260 W, 120 V.",
-    "components": ["Barra de sellado", "Brazo con pomo", "Dial de tiempo", "Cinta de teflón"],
-    "usage": "Ajustar el tiempo (empezar bajo), alinear el borde de la bolsa sin muestra en el sello, bajar el brazo hasta el impulso y comprobar un sello continuo.",
-    "safety": "Barra caliente: no tocar la resistencia. No sellar líquidos. Desconectar al terminar."
-  },
-  {
-    "id": "desecador",
-    "name": "Desecador de vidrio",
-    "function": "Enfriar y guardar muestras secas sin reabsorber humedad, sobre placa de porcelana y desecante, antes del pesaje analítico.",
-    "components": ["Base de vidrio", "Tapa con pomo", "Placa de porcelana", "Desecante (sílica gel)"],
-    "usage": "Comprobar el desecante, colocar muestras con pinzas, cerrar la tapa en vertical (no deslizar). Enfriar y pesar de inmediato al sacar.",
-    "safety": "Vidrio pesado: dos manos. Evitar choque térmico. No recoger roturas con las manos desnudas."
+    "id": "shimadzu_gc2014",
+    "name": "Shimadzu GC-2014",
+    "brand": "Shimadzu",
+    "description": "Cromatógrafo de gases versátil y robusto, configurado para el análisis detallado de ácidos grasos volátiles y otros compuestos en investigación rumiológica.",
+    "tempRange": "Variable",
+    "function": "Cromatografía de gases para compuestos volátiles (en rumiología, a menudo AGV).",
+    "components": ["Horno de columna", "Inyector", "Detector", "Teclado START/STOP", "Autosampler", "Líneas de gases"],
+    "usage": "El estudiante prepara viales y observa. Gases y temperaturas: solo el docente.",
+    "safety": "Gases a presión, altas temperaturas. No operar sin supervisión."
   }
 ]

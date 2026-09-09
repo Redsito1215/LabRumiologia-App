@@ -28,8 +28,16 @@ public class AssistantRepository {
         try {
             return askBackend(question, equipmentId);
         } catch (Exception error) {
-            Log.w(TAG, "Backend no disponible; usando guías locales", error);
-            return fallback.ask(question, equipmentId);
+            Log.w(TAG, "Backend no disponible o error de red: " + error.getMessage());
+            // Si el backend falla, usamos la guía local
+            LocalGuide.Reply localReply = fallback.ask(question, equipmentId);
+            
+            // Si no hay respuesta local útil, devolvemos un mensaje genérico sin detalles de error técnico
+            if (localReply == null || localReply.answer == null || localReply.answer.isEmpty()) {
+                return new LocalGuide.Reply("Lo siento, no puedo responder en este momento. Por favor, verifica tu conexión o intenta más tarde.", null);
+            }
+            
+            return localReply;
         }
     }
 
@@ -39,12 +47,11 @@ public class AssistantRepository {
         if (!base.endsWith("/")) base += "/";
 
         HttpURLConnection connection = (HttpURLConnection) new URL(base + "chat").openConnection();
-        connection.setConnectTimeout(8_000);
-        connection.setReadTimeout(25_000);
+        connection.setConnectTimeout(5_000);
+        connection.setReadTimeout(15_000);
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-        // El servidor valida este ID y resuelve sus file_ids/vector_store_ids autorizados.
         connection.setRequestProperty("X-Equipment-Id", equipmentId == null ? "" : equipmentId);
         connection.setRequestProperty("X-App-Token", BuildConfig.APP_ACCESS_TOKEN);
 
@@ -53,22 +60,31 @@ public class AssistantRepository {
         connection.getOutputStream().write(body.toString().getBytes(StandardCharsets.UTF_8));
 
         int status = connection.getResponseCode();
-        String raw = read(status >= 400 ? connection.getErrorStream() : connection.getInputStream());
-        if (status >= 400) throw new IllegalStateException("HTTP " + status + ": " + raw);
+        if (status >= 400) {
+            throw new IllegalStateException("Error del servidor: HTTP " + status);
+        }
 
+        String raw = read(connection.getInputStream());
         JSONObject json = new JSONObject(raw);
         String answer = json.optString("answer", "").trim();
-        if (answer.isEmpty()) throw new IllegalStateException("Respuesta vacía del backend");
+        
+        if (answer.isEmpty()) return new LocalGuide.Reply("No encontré información específica sobre eso en los manuales.", null);
+
         JSONArray items = json.optJSONArray("sources");
         StringBuilder sources = new StringBuilder();
-        if (items != null) {
+        if (items != null && items.length() > 0) {
             for (int i = 0; i < items.length(); i++) {
-                String title = items.optJSONObject(i) != null
-                        ? items.optJSONObject(i).optString("title", "") : "";
-                if (!title.isEmpty()) sources.append("• ").append(title).append('\n');
+                JSONObject srcObj = items.optJSONObject(i);
+                if (srcObj != null) {
+                    String title = srcObj.optString("title", "").trim();
+                    if (!title.isEmpty()) {
+                        sources.append("• ").append(title).append("\n");
+                    }
+                }
             }
         }
-        String sourceText = sources.length() == 0 ? null : "Fuentes:\n" + sources.toString().trim();
+        
+        String sourceText = sources.length() == 0 ? null : sources.toString().trim();
         return new LocalGuide.Reply(answer, sourceText);
     }
 
@@ -78,8 +94,8 @@ public class AssistantRepository {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             String line;
-            while ((line = reader.readLine()) != null) text.append(line);
+            while ((line = reader.readLine()) != null) text.append(line).append("\n");
         }
-        return text.toString();
+        return text.toString().trim();
     }
 }

@@ -13,6 +13,20 @@
     <string name="section_safety">EPP y riesgos</string>
     <string name="ficha_missing">No hay ficha local para esta clase. Consulte al asistente o al responsable del laboratorio.</string>
     <string name="ask_assistant">Consultar asistente</string>
+    <string name="ver_manuales">Ver manuales</string>
+    <string name="identificacion_confirmada">Identificación confirmada</string>
+    <string name="area_label">Área: %1$s</string>
+    <string name="area_default">Laboratorio de Rumiología</string>
+    <string name="lab_subtitle">Laboratorio de Rumiología - UTEQ</string>
+    <string name="resumen_tab">Resumen</string>
+    <string name="section_description">Descripción</string>
+    <string name="section_temp_range">Rango de temperatura</string>
+    <string name="section_function">Función</string>
+    <string name="section_brand_model">Marca / Modelo</string>
+    <string name="temp_subtext">(según la práctica)</string>
+    <string name="brand_subtext">(según laboratorio)</string>
+    <string name="marca_label">Marca: %1$s</string>
+    <string name="clase_yolo_label">Clase YOLO: %1$s</string>
     <string name="chat_hint">Pregunte sobre uso, seguridad o mantenimiento…</string>
     <string name="send">Enviar</string>
     <string name="select_equipment">Seleccione un equipo detectado</string>
@@ -36,4 +50,17 @@
     <string name="voice_selected">Voz: %1$s</string>
     <string name="voice_preview">Hola, soy el asistente del laboratorio.</string>
     <string name="voice_none">No hay otras voces en español en este dispositivo</string>
+
+    <string name="detecting_header_title">Lab Rumiología</string>
+    <string name="detecting_header_subtitle">UTEQ</string>
+    <string name="detecting_header_slogan">Ciencia aplicada\nal bienestar animal</string>
+    <string name="equipos_encontrados">%1$d equipos encontrados</string>
+    <string name="selecciona_equipo">Selecciona un equipo para ver su información</string>
+    <string name="ver_equipo">Ver %1$s</string>
+    <string name="ver_equipo_placeholder">Ver equipo</string>
+    <string name="confianza_label">Confianza: %1$d%%</string>
+    <string name="codigo_label">Código: %1$s</string>
+    <string name="nav_camera">Cámara</string>
+    <string name="nav_equipments">Equipos</string>
+    <string name="nav_history">Historial</string>
 </resources>

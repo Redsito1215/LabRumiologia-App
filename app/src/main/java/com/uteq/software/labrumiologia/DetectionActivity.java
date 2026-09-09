@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -62,6 +63,8 @@ public class DetectionActivity extends AppCompatActivity {
     private final DetectionTracker tracker = new DetectionTracker();
     private ExecutorService analysisExecutor;
     private final AtomicBoolean busy = new AtomicBoolean(false);
+    private Camera camera;
+    private boolean flashOn = false;
 
     private final List<Detection> latestDetections = new ArrayList<>();
     private int selectedIndex = -1;
@@ -80,7 +83,7 @@ public class DetectionActivity extends AppCompatActivity {
         btnInfo = findViewById(R.id.btnInfo);
         detectionsList = findViewById(R.id.detectionsList);
         detectionsList.setLayoutManager(
-                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+                new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         );
         adapter = new DetectionAdapter(this::selectDetection);
         detectionsList.setAdapter(adapter);
@@ -88,6 +91,7 @@ public class DetectionActivity extends AppCompatActivity {
 
         overlayView.setOnDetectionTapListener(this::selectDetection);
         btnInfo.setOnClickListener(v -> openDetail());
+        findViewById(R.id.btnFlash).setOnClickListener(v -> toggleFlash());
         analysisExecutor = Executors.newSingleThreadExecutor();
 
         try {
@@ -118,8 +122,11 @@ public class DetectionActivity extends AppCompatActivity {
         selectedClassId = detection != null ? detection.classId : null;
         overlayView.setSelectedIndex(index);
         adapter.submit(new ArrayList<>(latestDetections), selectedIndex);
-        btnInfo.setEnabled(true);
-        statusText.setText(R.string.detection_ready);
+        btnInfo.setEnabled(detection != null);
+        btnInfo.setVisibility(detection != null ? View.VISIBLE : View.GONE);
+        if (detection != null) {
+            btnInfo.setText(getString(R.string.ver_equipo, detection.label));
+        }
     }
 
     private void openDetail() {
@@ -159,12 +166,20 @@ public class DetectionActivity extends AppCompatActivity {
         analysis.setAnalyzer(analysisExecutor, this::analyzeFrame);
 
         cameraProvider.unbindAll();
-        cameraProvider.bindToLifecycle(
+        camera = cameraProvider.bindToLifecycle(
                 this,
                 new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build(),
                 preview,
                 analysis
         );
+    }
+
+    private void toggleFlash() {
+        if (camera == null || !camera.getCameraInfo().hasFlashUnit()) return;
+        flashOn = !flashOn;
+        camera.getCameraControl().enableTorch(flashOn);
+        android.widget.ImageButton btnFlash = findViewById(R.id.btnFlash);
+        btnFlash.setImageResource(flashOn ? R.drawable.ic_flash_on : R.drawable.ic_flash_off);
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -250,26 +265,25 @@ public class DetectionActivity extends AppCompatActivity {
             selectedIndex = -1;
             selectedClassId = null;
             btnInfo.setEnabled(false);
+            btnInfo.setVisibility(View.GONE);
             statusText.setText(R.string.no_detections);
-        } else if (latestDetections.size() == 1) {
-            btnInfo.setEnabled(selectedIndex >= 0);
-            statusText.setText(R.string.detection_ready);
+            findViewById(R.id.statusSubtitle).setVisibility(View.VISIBLE);
         } else {
             btnInfo.setEnabled(selectedIndex >= 0);
-            statusText.setText(getString(R.string.detections_ready, latestDetections.size()));
+            btnInfo.setVisibility(selectedIndex >= 0 ? View.VISIBLE : View.GONE);
+            if (selectedIndex >= 0) {
+                btnInfo.setText(getString(R.string.ver_equipo, latestDetections.get(selectedIndex).label));
+            }
+            statusText.setText(getString(R.string.equipos_encontrados, latestDetections.size()));
+            findViewById(R.id.statusSubtitle).setVisibility(View.GONE);
         }
         overlayView.setImageSize(srcW, srcH);
         overlayView.setDetections(latestDetections, selectedIndex);
         adapter.submit(latestDetections, selectedIndex);
         detectionsList.setVisibility(latestDetections.isEmpty() ? View.GONE : View.VISIBLE);
-        ViewGroup.LayoutParams lp = detectionsList.getLayoutParams();
-        if (lp != null) {
-            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            detectionsList.setLayoutParams(lp);
-        }
     }
 
-    /** Descarta cajas que FILL_CENTER deja casi totalmente fuera de la vista previa. */
+    /** Descarta cajas que FILL_CENTER deja casi totalmente fuera de la vista previa y filtra duplicados por clase. */
     private List<Detection> visibleDetections(List<Detection> detections, int srcW, int srcH) {
         List<Detection> visible = new ArrayList<>();
         float viewW = overlayView.getWidth();
@@ -281,13 +295,27 @@ public class DetectionActivity extends AppCompatActivity {
         float left = (srcW - visibleW) * 0.5f;
         float top = (srcH - visibleH) * 0.5f;
         android.graphics.RectF viewport = new android.graphics.RectF(left, top, left + visibleW, top + visibleH);
+        
+        // Mapa para conservar solo la detección con mayor confianza por cada clase
+        java.util.Map<String, Detection> bestByClass = new java.util.HashMap<>();
+
         for (Detection d : detections) {
             if (d.box == null) continue;
             android.graphics.RectF intersection = new android.graphics.RectF(d.box);
             if (!intersection.intersect(viewport)) continue;
             float area = Math.max(1f, d.box.width() * d.box.height());
-            if ((intersection.width() * intersection.height()) / area >= 0.60f) visible.add(d);
+            if ((intersection.width() * intersection.height()) / area >= 0.60f) {
+                Detection existing = bestByClass.get(d.classId);
+                if (existing == null || d.confidence > existing.confidence) {
+                    bestByClass.put(d.classId, d);
+                }
+            }
         }
+        
+        visible.addAll(bestByClass.values());
+        // Opcional: ordenar por confianza descendente
+        visible.sort((a, b) -> Float.compare(b.confidence, a.confidence));
+
         return visible;
     }
 

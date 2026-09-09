@@ -1,36 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/messageCard"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/bg_bubble_assistant"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:layout_marginBottom="16dp"
+    android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/messageRole"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/primary"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+    <ImageView
+        android:id="@+id/messageAvatar"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/logo_aplicacion_rumiologia"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
-    <TextView
-        android:id="@+id/messageBody"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/messageContainer"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:lineSpacingExtra="3dp"
-        android:textColor="@color/on_surface"
-        android:textSize="15sp" />
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/messageSources"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="@color/on_surface_muted"
-        android:textSize="12sp"
+        <LinearLayout
+            android:id="@+id/messageBubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_bubble_assistant"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/messageBody"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/on_surface"
+                android:textSize="14sp"
+                android:lineSpacingExtra="3dp"
+                tools:text="Según la guía de operación, para encender la estufa de secado siga estos pasos..." />
+
+            <!-- Sources Section -->
+            <LinearLayout
+                android:id="@+id/sourceLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_summary_item"
+                android:orientation="vertical"
+                android:padding="8dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/reporte" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Fuente consultada:"
+                        android:textColor="#1F9A76"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:id="@+id/sourceIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/libros" />
+                    <TextView
+                        android:id="@+id/messageSources"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:textColor="@color/on_surface_muted"
+                        android:textSize="11sp"
+                        tools:text="Manual de estufa de secado.pdf\nPágina 8" />
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_arrow_forward"
+                        app:tint="#1F9A76" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/messageTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/on_surface_muted"
+            android:textSize="10sp"
+            tools:text="09:42" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/messageSpacer"
+        android:layout_width="48dp"
+        android:layout_height="0dp"
         android:visibility="gone" />
+
 </LinearLayout>
