@@ -16,9 +16,24 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Para OpenAI File Search, edite `../local.properties` y agregue
-`openai.api.key=...` y `llm.provider=openai`.
-La clave permanece exclusivamente en el backend; nunca se empaqueta en Android.
+Para desarrollo local, edite `../local.properties`. Para Vercel configure las
+variables desde **Settings > Environment Variables**; nunca guarde claves en Git:
+
+```text
+OPENAI_API_KEY=secretoaqui
+GEMINI_API_KEY=secretoaqui
+LLM_PROVIDER=openai
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_FILE_SEARCH_TOP_K=4
+OPENAI_MAX_OUTPUT_TOKENS=300
+REQUESTS_PER_MINUTE=20
+APP_ACCESS_TOKEN=secretoaqui
+ADMIN_ACCESS_TOKEN=secretoaqui
+```
+
+`APP_ACCESS_TOKEN` debe coincidir con `assistant.app.token` de `local.properties`
+al compilar la APK. `ADMIN_ACCESS_TOKEN` debe ser diferente y permanece solamente
+en Vercel. La APK nunca debe contener las claves de OpenAI, Gemini o administración.
 
 ## Subir manuales a OpenAI (FileSearch)
 
@@ -37,10 +52,10 @@ En cada `/chat` el backend llama a la API así:
 tools=[{"type": "file_search", "vector_store_ids": ["vs_del_equipo", "vs_general"]}]
 ```
 
-Compruebe el mapeo:
+Compruebe el mapeo enviando el token de la aplicación:
 
 ```bash
-curl http://127.0.0.1:8000/knowledge/balanza_analitica
+curl -H "X-App-Token: secretoaqui" http://127.0.0.1:8000/knowledge/balanza_analitica
 ```
 
 ## Arrancar
@@ -55,6 +70,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - `GET /knowledge/{equipment_class}`
 - `POST /chat` body: `{ "question": "...", "equipment_class": "incubadora" }`
 - `POST /tools/search_lab_docs` (fragmentos de las guías `.md` locales)
+
+Las rutas públicas de consulta exigen `X-App-Token` y aplican un límite por IP.
+`POST /ingest` exige el secreto independiente `X-Admin-Token`.
 
 La app **no** envía documentos ni IDs de OpenAI: solo pregunta + clase detectada.
 

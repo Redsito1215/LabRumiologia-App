@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+import os
 from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
@@ -28,8 +29,14 @@ def prop(key: str, default: str = "") -> str:
     return PROPERTIES.get(key, default)
 
 
+def setting(env_key: str, property_key: str, default: str = "") -> str:
+    """Use deployment secrets first and local.properties only for local development."""
+    return os.getenv(env_key, "").strip() or prop(property_key, default)
+
+
 def _path_from_property(key: str, default: Path) -> Path:
-    raw = prop(key)
+    env_key = key.upper().replace(".", "_")
+    raw = setting(env_key, key)
     if not raw:
         return default.resolve()
     path = Path(raw)
@@ -39,18 +46,27 @@ def _path_from_property(key: str, default: Path) -> Path:
 
 
 class Settings:
-    openai_api_key: str = prop("openai.api.key")
-    openai_model: str = prop("openai.model", "gpt-4o-mini")
-    gemini_api_key: str = prop("gemini.api.key")
-    host: str = prop("backend.host", "0.0.0.0")
-    port: int = int(prop("backend.port", "8000"))
+    openai_api_key: str = setting("OPENAI_API_KEY", "openai.api.key")
+    openai_model: str = setting("OPENAI_MODEL", "openai.model", "gpt-4o-mini")
+    gemini_api_key: str = setting("GEMINI_API_KEY", "gemini.api.key")
+    host: str = setting("BACKEND_HOST", "backend.host", "0.0.0.0")
+    port: int = int(setting("BACKEND_PORT", "backend.port", "8000"))
     docs_dir: Path = _path_from_property("backend.docs.dir", BACKEND_ROOT / "data" / "docs")
     knowledge_path: Path = _path_from_property(
         "backend.knowledge.path", BACKEND_ROOT / "data" / "equipment_knowledge.json"
     )
     llm_model: str = ""
-    top_k: int = int(prop("openai.file.search.top.k", "4"))
-    llm_provider: str = prop("llm.provider", "openai").strip().lower()
+    top_k: int = max(1, min(10, int(setting("OPENAI_FILE_SEARCH_TOP_K", "openai.file.search.top.k", "4"))))
+    max_output_tokens: int = max(100, min(1000, int(setting("OPENAI_MAX_OUTPUT_TOKENS", "openai.max.output.tokens", "300"))))
+    llm_provider: str = setting("LLM_PROVIDER", "llm.provider", "openai").strip().lower()
+    app_access_token: str = setting("APP_ACCESS_TOKEN", "assistant.app.token")
+    admin_access_token: str = setting("ADMIN_ACCESS_TOKEN", "backend.admin.token")
+    requests_per_minute: int = max(1, min(120, int(setting("REQUESTS_PER_MINUTE", "requests.per.minute", "20"))))
+    cors_allowed_origins: tuple[str, ...] = tuple(
+        origin.strip()
+        for origin in setting("CORS_ALLOWED_ORIGINS", "cors.allowed.origins").split(",")
+        if origin.strip()
+    )
 
     @property
     def openai_configured(self) -> bool:

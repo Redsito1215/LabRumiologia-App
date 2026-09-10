@@ -120,6 +120,7 @@ class OpenAIFileSearchRag:
         settings = get_settings()
         self.model = settings.openai_model
         self.top_k = settings.top_k
+        self.max_output_tokens = settings.max_output_tokens
         # Evita que una pérdida de red o falta de saldo deje congelada la UI móvil.
         self._client = OpenAI(
             api_key=settings.openai_api_key,
@@ -147,6 +148,7 @@ class OpenAIFileSearchRag:
                 equipment_name=name,
                 equipment_class=equipment_class or "no especificado",
             ),
+            "max_output_tokens": self.max_output_tokens,
             "tools": [
                 {
                     "type": "file_search",
