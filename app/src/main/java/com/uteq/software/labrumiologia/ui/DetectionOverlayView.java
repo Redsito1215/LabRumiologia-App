@@ -75,7 +75,6 @@ public class DetectionOverlayView extends View {
         invalidate();
     }
 
-    /** FILL_CENTER: misma lógica que PreviewView.ScaleType.FILL_CENTER. */
     private void rebuildViewBoxes() {
         viewBoxes.clear();
         float viewW = getWidth();
@@ -120,9 +119,9 @@ public class DetectionOverlayView extends View {
 
             int color;
             if (isSelected) {
-                color = 0xFF2EE6A6; // Green selected
+                color = 0xFF2EE6A6;
             } else {
-                color = 0xFF5BC3E9; // Blue unselected
+                color = 0xFF5BC3E9;
             }
 
             Paint stroke = isSelected ? selectedPaint : boxPaint;
@@ -140,7 +139,6 @@ public class DetectionOverlayView extends View {
             float labelH = 44f;
             float top = box.top - labelH;
 
-            // Adjust label position if it goes off screen
             if (top < 0) top = box.top + 8f;
             float left = box.left;
 

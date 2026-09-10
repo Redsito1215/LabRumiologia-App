@@ -17,7 +17,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Toolbar/Header -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -56,15 +55,8 @@
                         android:textSize="14sp" />
                 </LinearLayout>
 
-                <ImageButton
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_alignParentEnd="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_lab_logo" />
             </RelativeLayout>
 
-            <!-- Main Image Carousel -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="280dp"
@@ -92,7 +84,6 @@
                     android:textSize="12sp" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Equipment ID Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -188,7 +179,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Tabs -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -231,14 +221,12 @@
                 android:layout_marginHorizontal="16dp"
                 android:background="#E0E0E0" />
 
-            <!-- Summary Content -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Description -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -282,7 +270,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Grid items -->
                 <GridLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -291,7 +278,6 @@
                     android:alignmentMode="alignMargins"
                     android:useDefaultMargins="true">
 
-                    <!-- Temperature -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -327,7 +313,6 @@
                             android:textSize="11sp" />
                     </LinearLayout>
 
-                    <!-- Components -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -357,7 +342,6 @@
                             tools:text="• Cámara de acero\n• Puerta\n• Bandejas" />
                     </LinearLayout>
 
-                    <!-- Function -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -387,7 +371,6 @@
                             tools:text="Secar muestras, bolsas filtro y material de vidrio." />
                     </LinearLayout>
 
-                    <!-- Brand / Model -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -488,7 +471,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Spacer for bottom padding -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="24dp" />
@@ -496,7 +478,6 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Actions -->
     <LinearLayout
         android:id="@+id/bottomActions"
         android:layout_width="match_parent"

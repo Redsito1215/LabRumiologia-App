@@ -112,7 +112,6 @@ public class EquipmentDetailActivity extends AppCompatActivity {
         List<String> paths = new ArrayList<>();
         if (classId == null) return paths;
         
-        // Buscamos hasta 4 imágenes en assets: {id}.jpg, {id}_2.jpg, etc.
         String basePath = "equipment_photos/";
         String[] suffixes = {"", "_2", "_3", "_4"};
         
@@ -123,7 +122,6 @@ public class EquipmentDetailActivity extends AppCompatActivity {
             } catch (IOException ignored) {}
         }
         
-        // Si no hay ninguna con sufijo, intentar solo la base (ya cubierto por el primer loop)
         return paths;
     }
 

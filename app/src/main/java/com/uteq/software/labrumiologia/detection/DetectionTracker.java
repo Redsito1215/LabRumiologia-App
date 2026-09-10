@@ -8,18 +8,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Tracking corto: suaviza la caja (EMA) y mantiene el ID mientras el equipo sigue en escena.
- * No conserva detecciones "fantasma" cuando el modelo ya no ve nada.
- */
 public class DetectionTracker {
     private static final float MATCH_IOU = 0.20f;
     private static final float EMA_ALPHA = 0.65f;
-    /** Frames sin match antes de borrar el track. */
     private static final int MAX_MISSED = 3;
     private static final int MAX_TRACKS = 3;
     private static final float MIN_TRACK_CONF = 0.50f;
-    /** Las detecciones firmes salen de inmediato; las dudosas deben repetirse. */
     private static final float IMMEDIATE_CONF = 0.70f;
     private static final int LOW_CONFIRMED_HITS = 2;
 
@@ -105,7 +99,6 @@ public class DetectionTracker {
             }
         }
 
-        // Solo devolver tracks vistos en este frame (sin fantasmas).
         List<Detection> out = new ArrayList<>();
         for (Track t : tracks) {
             if (!t.updated) continue;

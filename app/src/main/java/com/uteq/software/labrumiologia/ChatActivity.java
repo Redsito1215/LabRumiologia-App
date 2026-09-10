@@ -30,9 +30,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.uteq.software.labrumiologia.data.AssistantRepository;
 import com.uteq.software.labrumiologia.data.EquipmentRepository;
-import com.uteq.software.labrumiologia.data.LocalGuide;
 import com.uteq.software.labrumiologia.model.EquipmentInfo;
 import com.uteq.software.labrumiologia.ui.ChatAdapter;
+import com.uteq.software.labrumiologia.ui.RecordingWaveView;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +55,8 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private ImageButton btnMic;
     private TextView btnVoiceChange;
     private TextView voiceStatus;
+    private View recordingPanel;
+    private RecordingWaveView recordingWave;
     private AssistantRepository assistant;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
 
@@ -89,6 +91,9 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         btnMic = findViewById(R.id.btnMic);
         btnVoiceChange = findViewById(R.id.btnVoiceChange);
         voiceStatus = findViewById(R.id.voiceStatus);
+        recordingPanel = findViewById(R.id.recordingPanel);
+        recordingWave = findViewById(R.id.recordingWave);
+        recordingPanel.setOnClickListener(v -> stopListening());
 
         input.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -283,11 +288,12 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
             @Override public void onRmsChanged(float rmsdB) {}
             @Override public void onBufferReceived(byte[] buffer) {}
             @Override public void onEndOfSpeech() { setVoiceStatus(getString(R.string.voice_processing)); }
-            @Override public void onError(int error) { listening = false; updateMicUi(false); setVoiceStatus(getString(R.string.voice_error)); }
+            @Override public void onError(int error) { listening = false; hideRecordingPanel(); updateMicUi(false); setVoiceStatus(getString(R.string.voice_error)); }
 
             @Override
             public void onResults(Bundle results) {
                 listening = false;
+                hideRecordingPanel();
                 updateMicUi(false);
                 ArrayList<String> texts = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (texts == null || texts.isEmpty()) { setVoiceStatus(getString(R.string.voice_error)); return; }
@@ -322,6 +328,11 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
         listening = true;
+        recordingPanel.setVisibility(View.VISIBLE);
+        recordingPanel.setAlpha(0f);
+        recordingPanel.setTranslationY(24f);
+        recordingPanel.animate().alpha(1f).translationY(0f).setDuration(180).start();
+        recordingWave.start();
         updateMicUi(true);
         setVoiceStatus(getString(R.string.voice_listening));
         speechRecognizer.startListening(intent);
@@ -329,6 +340,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private void stopListening() {
         listening = false;
+        hideRecordingPanel();
         updateMicUi(false);
         if (speechRecognizer != null) speechRecognizer.stopListening();
         setVoiceStatus(null);
@@ -342,14 +354,22 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         btnMic.setAlpha(btnMic.isEnabled() ? 1.0f : 0.35f);
     }
 
+    private void hideRecordingPanel() {
+        if (recordingWave != null) recordingWave.stop();
+        if (recordingPanel == null || recordingPanel.getVisibility() != View.VISIBLE) return;
+        recordingPanel.animate().alpha(0f).translationY(20f).setDuration(140)
+                .withEndAction(() -> recordingPanel.setVisibility(View.GONE)).start();
+    }
+
     private void updateComposerUi() {
         if (btnSend == null || btnMic == null || input == null) return;
         boolean canSend = !requestInFlight && !textFromInput().isEmpty();
         btnSend.setEnabled(canSend);
         btnSend.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(
-                this, canSend ? R.color.primary_dark : R.color.primary_soft)));
+                this, canSend ? R.color.primary : R.color.primary_soft)));
         btnSend.setColorFilter(ContextCompat.getColor(this, canSend ? R.color.white : R.color.on_surface_muted));
         btnSend.setAlpha(canSend ? 1.0f : 0.55f);
+        btnSend.setElevation(canSend ? 8f * getResources().getDisplayMetrics().density : 0f);
         btnMic.setEnabled(!requestInFlight);
         updateMicUi(listening);
     }
@@ -381,7 +401,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         voiceMode = false;
 
         io.execute(() -> {
-            LocalGuide.Reply reply = assistant.ask(question, equipmentId);
+            AssistantRepository.Reply reply = assistant.ask(question, equipmentId);
             runOnUiThread(() -> {
                 if (isDestroyed()) return;
                 requestInFlight = false;
@@ -398,12 +418,6 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private String sanitizeAnswer(String answer) {
         if (answer == null) return "";
-        if (answer.contains("No se pudo conectar con el backend")) {
-            int index = answer.indexOf("Resumen de las guías:");
-            if (index != -1) {
-                return answer.substring(index).trim();
-            }
-        }
         return answer.replaceFirst("(?is)\\n\\s*(fuente|fuentes|sources?)\\s*:.*$", "").trim();
     }
 
@@ -439,6 +453,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     @Override
     protected void onDestroy() {
         listening = false;
+        if (recordingWave != null) recordingWave.stop();
         if (speechRecognizer != null) { speechRecognizer.destroy(); speechRecognizer = null; }
         if (tts != null) { tts.stop(); tts.shutdown(); tts = null; }
         io.shutdownNow();

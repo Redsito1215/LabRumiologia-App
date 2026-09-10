@@ -88,7 +88,6 @@ class Settings:
             return "openai" if self.openai_configured else "offline"
         if requested in {"gemini", "chroma"}:
             return "gemini" if self.gemini_configured else "offline"
-        # auto: no gastar OpenAI; usar documentos locales. Gemini solo si hay clave.
         if self.gemini_configured:
             return "gemini"
         return "offline"

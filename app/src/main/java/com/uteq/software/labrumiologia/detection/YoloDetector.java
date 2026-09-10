@@ -30,25 +30,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Detector YOLO TFLite (Ultralytics).
- * Soporta export end-to-end [1, N, 6] (xyxy, conf, clase) y salida cruda [1, 4+nc, anchors].
- */
 public class YoloDetector implements AutoCloseable {
     public static final String MODEL_FILE = "model.tflite";
     public static final String LABELS_FILE = "labels.txt";
-    /**
-     * Umbral de candidato. Las capturas de otra pantalla pierden contraste y suelen
-     * quedar por debajo de 0.70; el tracker exige repetición para esos casos.
-     */
     public static final float CONF_THRESHOLD = 0.50f;
-    /** IoU para NMS; también suprime clases distintas muy solapadas (mismo objeto). */
     public static final float IOU_THRESHOLD = 0.45f;
     public static final float CROSS_CLASS_IOU = 0.55f;
-    /** Suprime una etiqueta alternativa cuando ambas cajas describen el mismo objeto. */
     public static final float CROSS_CLASS_CONTAINMENT = 0.72f;
     public static final int MAX_DETECTIONS = 3;
-    /** Cierra ligeramente las cajas para centrar el marco sobre el cuerpo de la máquina. */
     public static final float BOX_INSET_RATIO = 0.04f;
 
     private enum OutputMode { END2END_ROWS, END2END_COLS, RAW_YOLO }
@@ -157,7 +146,6 @@ public class YoloDetector implements AutoCloseable {
         return srcHeight;
     }
 
-    /** Formato Ultralytics export: [N, 6] → x1,y1,x2,y2,conf,class */
     private List<Detection> postprocessEnd2EndRows(float[][] rows) {
         List<Detection> raw = new ArrayList<>();
         for (float[] row : rows) {
@@ -220,7 +208,6 @@ public class YoloDetector implements AutoCloseable {
         if (box.width() <= 8f || box.height() <= 8f) return false;
         float imgArea = Math.max(1, srcWidth) * (float) Math.max(1, srcHeight);
         float boxArea = box.width() * box.height();
-        // Descarta cajas aplastadas (barras arriba), ruido y cajas que llenan toda la escena.
         if (boxArea < imgArea * 0.02f) return false;
         if (boxArea > imgArea * 0.92f) return false;
         float relH = box.height() / Math.max(1, srcHeight);
@@ -244,13 +231,12 @@ public class YoloDetector implements AutoCloseable {
         );
     }
 
-    /** Recorta el exceso típico de YOLO; en cajas pequeñas (lejos) aplica menos inset. */
     private RectF tighten(RectF box) {
         float imgArea = Math.max(1, srcWidth) * (float) Math.max(1, srcHeight);
         float rel = (box.width() * box.height()) / imgArea;
         float ratio = BOX_INSET_RATIO;
-        if (rel < 0.04f) ratio *= 0.45f;      // lejos: casi no encoger
-        else if (rel < 0.12f) ratio *= 0.70f; // medio
+        if (rel < 0.04f) ratio *= 0.45f;
+        else if (rel < 0.12f) ratio *= 0.70f;
         float ix = box.width() * ratio;
         float iyTop = box.height() * ratio;
         float iyBottom = box.height() * ratio;
@@ -287,10 +273,6 @@ public class YoloDetector implements AutoCloseable {
         return new RectF(cx - w / 2f, cy - h / 2f, cx + w / 2f, cy + h / 2f);
     }
 
-    /**
-     * NMS: suprime la misma clase por IoU y también clases distintas muy solapadas
-     * (evita Daisy+GC+Estufa sobre el mismo equipo).
-     */
     private List<Detection> nms(List<Detection> detections) {
         Collections.sort(detections, (a, b) -> Float.compare(b.confidence, a.confidence));
         List<Detection> result = new ArrayList<>();

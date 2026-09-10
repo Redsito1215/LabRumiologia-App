@@ -30,8 +30,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.uteq.software.labrumiologia.detection.DetectionTracker;
+import com.uteq.software.labrumiologia.data.ApiKeyStore;
 import com.uteq.software.labrumiologia.detection.YoloDetector;
 import com.uteq.software.labrumiologia.model.Detection;
 import com.uteq.software.labrumiologia.ui.DetectionAdapter;
@@ -58,6 +62,7 @@ public class DetectionActivity extends AppCompatActivity {
     private MaterialButton btnInfo;
     private DetectionAdapter adapter;
     private RecyclerView detectionsList;
+    private View bottomPanelContent;
 
     private YoloDetector detector;
     private final DetectionTracker tracker = new DetectionTracker();
@@ -71,6 +76,9 @@ public class DetectionActivity extends AppCompatActivity {
     private String selectedClassId = null;
     private boolean selectedByUser = false;
     private boolean modelAvailable = false;
+    private ApiKeyStore apiKeyStore;
+    private boolean panelExpanded = false;
+    private boolean hasExpandedForDetection = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +90,11 @@ public class DetectionActivity extends AppCompatActivity {
         overlayView = findViewById(R.id.overlayView);
         statusText = findViewById(R.id.statusText);
         btnInfo = findViewById(R.id.btnInfo);
+        apiKeyStore = new ApiKeyStore(this);
+        findViewById(R.id.btnSettings).setOnClickListener(v -> showApiKeyDialog(false));
         detectionsList = findViewById(R.id.detectionsList);
+        bottomPanelContent = findViewById(R.id.bottomPanelContent);
+        findViewById(R.id.bottomPanelHandle).setOnClickListener(v -> setPanelExpanded(!panelExpanded, true));
         detectionsList.setLayoutManager(
                 new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         );
@@ -94,6 +106,12 @@ public class DetectionActivity extends AppCompatActivity {
         btnInfo.setOnClickListener(v -> openDetail());
         findViewById(R.id.btnFlash).setOnClickListener(v -> toggleFlash());
         analysisExecutor = Executors.newSingleThreadExecutor();
+
+        if (!apiKeyStore.hasKey()) {
+            statusText.setText(R.string.api_key_required);
+            showApiKeyDialog(true);
+            return;
+        }
 
         try {
             detector = new YoloDetector(this);
@@ -116,6 +134,65 @@ public class DetectionActivity extends AppCompatActivity {
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
         }
+    }
+
+    private void setPanelExpanded(boolean expanded, boolean animate) {
+        if (bottomPanelContent == null || panelExpanded == expanded) return;
+        panelExpanded = expanded;
+        bottomPanelContent.animate().cancel();
+        if (expanded) {
+            bottomPanelContent.setVisibility(View.VISIBLE);
+            if (animate) {
+                bottomPanelContent.setAlpha(0f);
+                bottomPanelContent.setTranslationY(28f);
+                bottomPanelContent.animate().alpha(1f).translationY(0f).setDuration(220).start();
+            } else {
+                bottomPanelContent.setAlpha(1f);
+                bottomPanelContent.setTranslationY(0f);
+            }
+        } else if (animate) {
+            bottomPanelContent.animate().alpha(0f).translationY(28f).setDuration(160)
+                    .withEndAction(() -> bottomPanelContent.setVisibility(View.GONE)).start();
+        } else {
+            bottomPanelContent.setVisibility(View.GONE);
+        }
+    }
+
+    private void showApiKeyDialog(boolean required) {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View sheet = getLayoutInflater().inflate(R.layout.bottom_sheet_api_key, null);
+        dialog.setContentView(sheet);
+        dialog.setCancelable(!required);
+        dialog.setCanceledOnTouchOutside(!required);
+        TextInputEditText input = sheet.findViewById(R.id.apiKeyInput);
+        TextInputLayout container = sheet.findViewById(R.id.apiKeyContainer);
+        MaterialButton save = sheet.findViewById(R.id.btnSaveApiKey);
+        MaterialButton delete = sheet.findViewById(R.id.btnDeleteApiKey);
+        delete.setText(required ? android.R.string.cancel : R.string.api_key_delete);
+        save.setOnClickListener(v -> {
+            String key = input.getText() == null ? "" : input.getText().toString().trim();
+            if (!key.startsWith("sk-") || key.length() < 20) {
+                container.setError(getString(R.string.api_key_invalid));
+                return;
+            }
+            try {
+                apiKeyStore.saveKey(key);
+                Toast.makeText(this, R.string.api_key_saved, Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+                recreate();
+            } catch (Exception error) {
+                container.setError(error.getMessage());
+            }
+        });
+        delete.setOnClickListener(v -> {
+            if (required) finish();
+            else {
+                apiKeyStore.deleteKey();
+                dialog.dismiss();
+                recreate();
+            }
+        });
+        dialog.show();
     }
 
     private void selectDetection(Detection detection, int index) {
@@ -162,7 +239,6 @@ public class DetectionActivity extends AppCompatActivity {
 
         ImageAnalysis analysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                // CameraX hace la conversión nativa; evita comprimir cada frame a JPEG.
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setTargetResolution(new android.util.Size(640, 480))
                 .build();
@@ -205,7 +281,6 @@ public class DetectionActivity extends AppCompatActivity {
             List<Detection> raw = detector.detect(bitmap);
             List<Detection> detections = tracker.update(raw);
             if (raw.isEmpty()) {
-                // Sin evidencia del modelo: limpiar selección y no arrastrar nombres viejos.
                 tracker.reset();
                 detections = new ArrayList<>();
             }
@@ -249,12 +324,15 @@ public class DetectionActivity extends AppCompatActivity {
     private void showDetections(List<Detection> detections, int srcW, int srcH) {
         latestDetections.clear();
         latestDetections.addAll(visibleDetections(detections, srcW, srcH));
+        if (!latestDetections.isEmpty() && !hasExpandedForDetection) {
+            hasExpandedForDetection = true;
+            setPanelExpanded(true, true);
+        }
         if (latestDetections.isEmpty()) {
             selectedIndex = -1;
             selectedClassId = null;
             selectedByUser = false;
         } else if (latestDetections.size() == 1) {
-            // Una sola máquina no requiere una selección adicional.
             selectedIndex = 0;
             selectedClassId = latestDetections.get(0).classId;
             selectedByUser = false;
@@ -268,7 +346,6 @@ public class DetectionActivity extends AppCompatActivity {
                 selectedByUser = false;
             }
         } else {
-            // Con varias máquinas, esperar una elección explícita del usuario.
             selectedIndex = -1;
             selectedClassId = null;
         }
@@ -294,7 +371,6 @@ public class DetectionActivity extends AppCompatActivity {
         detectionsList.setVisibility(latestDetections.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
-    /** Descarta cajas que FILL_CENTER deja casi totalmente fuera de la vista previa y filtra duplicados por clase. */
     private List<Detection> visibleDetections(List<Detection> detections, int srcW, int srcH) {
         List<Detection> visible = new ArrayList<>();
         float viewW = overlayView.getWidth();
@@ -307,7 +383,6 @@ public class DetectionActivity extends AppCompatActivity {
         float top = (srcH - visibleH) * 0.5f;
         android.graphics.RectF viewport = new android.graphics.RectF(left, top, left + visibleW, top + visibleH);
         
-        // Mapa para conservar solo la detección con mayor confianza por cada clase
         java.util.Map<String, Detection> bestByClass = new java.util.HashMap<>();
 
         for (Detection d : detections) {
@@ -324,7 +399,6 @@ public class DetectionActivity extends AppCompatActivity {
         }
         
         visible.addAll(bestByClass.values());
-        // Opcional: ordenar por confianza descendente
         visible.sort((a, b) -> Float.compare(b.confidence, a.confidence));
 
         return visible;

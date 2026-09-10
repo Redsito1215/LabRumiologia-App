@@ -1,106 +1,100 @@
-# Lab Rumiología — Detección de equipos (UTEQ)
+# Lab Rumiología UTEQ
 
-Aplicación Android que detecta en tiempo real equipos del Laboratorio de Rumiología,
-muestra ficha técnica y consulta un asistente RAG. El LLM responde con las **guías y
-manuales de ese equipo** (FileSearch de OpenAI).
+Aplicación Android para identificar equipos del Laboratorio de Rumiología de la UTEQ y consultar información técnica mediante voz o texto.
 
-## Cómo funciona
+## Funciones principales
 
-1. **Etiquetado (Label Studio):** cada recuadro en la foto es un equipo; la clase es el nombre del equipo.
-2. **YOLO:** se entrena con esas imágenes + archivos `.txt` (ubicación y clase). La app identifica el equipo en cámara.
-3. **RAG / FileSearch:** según el equipo detectado, el backend inyecta los `vector_store_ids` de sus manuales. El modelo (GPT, u otro proveedor) busca **solo** en esa base de conocimiento.
+- Detección de equipos en tiempo real con CameraX y un modelo YOLO convertido a TensorFlow Lite.
+- Visualización simultánea de hasta tres equipos con cajas delimitadoras independientes.
+- Fichas técnicas con descripción, características, seguridad, limpieza y operación.
+- Consultas por texto y reconocimiento de voz.
+- Respuestas breves reproducidas mediante la síntesis de voz de Android.
+- Consulta documental con OpenAI File Search y búsqueda web como respaldo.
+- Almacenamiento cifrado de la clave personal mediante Android Keystore.
 
-```
-Foto del lab  →  Label Studio  →  dataset YOLO  →  entrenamiento  →  TFLite en Android
-                                                                      │
-Guías PDF/MD  →  vector store por equipo (OpenAI)  ←  clase detectada ┘
-                                                                      │
-                                                               FileSearch + LLM
-```
+## Arquitectura
 
-## Estructura
-
-```
-app/          App Android (CameraX + TFLite + chat)
-ml/           Dataset, Label Studio, entrenamiento y export TFLite
-backend/      FastAPI + FileSearch (OpenAI) + fallback Chroma/Gemini
-docs/         Dataset, entregables, evidencias
-```
-
-## 1. Etiquetar con Label Studio
-
-Instale [Label Studio](https://labelstud.io/) y cree un proyecto de *Object Detection with Bounding Boxes*.
-
-- Interfaz lista: `ml/labelstudio/config.xml` (las clases coinciden con `ml/dataset/data.yaml`).
-- Importe fotos reales del laboratorio (autorización previa; ver `docs/DATASET.md`).
-- Dibuje un bounding box por equipo visible.
-- **Export → YOLO** (genera `images/`, `labels/` con `class cx cy w h` y `classes.txt`).
-
-```bash
-python ml/scripts/import_labelstudio.py --src ruta/al/export.zip --split
+```text
+Cámara del teléfono
+        │
+        ▼
+Modelo TensorFlow Lite
+        │
+        ▼
+Equipo identificado ──► Ficha técnica
+        │
+        ▼
+OpenAI Responses API
+        │
+        ├── File Search
+        ├── Guías incluidas en la aplicación
+        └── Búsqueda web de respaldo
 ```
 
-## 2. Entrenar YOLO y copiar a Android
+La inferencia visual se ejecuta directamente en el teléfono. La aplicación no necesita un servidor propio ni que una computadora permanezca encendida.
 
-El detector usa **YOLO26 medium** a 640 px. La configuración prioriza precisión de
-las cajas manteniendo una exportación cuantizada para Android.
+## Requisitos
 
-```bash
-pip install -r ml/requirements.txt
-python ml/scripts/train_yolo.py --data ml/dataset/data.yaml
-python ml/scripts/export_tflite.py --weights ml/models/best.pt
+- Android Studio con soporte para Android SDK 37.
+- JDK 11 o una versión compatible configurada por Android Studio.
+- Dispositivo Android 8.0 o superior.
+- Conexión a Internet para las consultas del asistente.
+- Una API key válida de OpenAI proporcionada por cada usuario.
+
+## Configuración de la API key
+
+La clave se introduce desde el botón de configuración de la aplicación. Se cifra con Android Keystore y permanece en el dispositivo.
+
+No se debe escribir ninguna clave en el código fuente. El archivo `local.properties` está excluido del repositorio y se utiliza únicamente para configuración local de Android Studio.
+
+## Compilación
+
+En Windows:
+
+```powershell
+.\gradlew.bat testDebugUnitTest assembleDebug
 ```
 
-Configuración predeterminada: `yolo26m.pt`, 200 épocas, lote automático, AdamW,
-early stopping de 45 épocas y exportación LiteRT `w8a32`. Antes de entrenar las 11
-clases, cada equipo debe tener suficientes imágenes etiquetadas en train/val/test.
+El APK de depuración se genera en:
 
-## 3. Base de conocimiento (RAG / FileSearch)
-
-Coloque las guías elaboradas por los laboratoristas en `backend/data/docs/<clase>/`.
-Ejemplo: `backend/data/docs/balanza_analitica/manual_ohaus.pdf`.
-
-```bash
-cd backend
-pip install -r requirements.txt
-# Configure openai.api.key en ../local.properties
-python -m scripts.upload_vector_stores
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+```text
+app/build/outputs/apk/debug/app-debug.apk
 ```
 
-La app envía `{ question, equipment_class }`. El backend resuelve los IDs y llama:
+## Estructura del proyecto
 
-```python
-tools=[{"type": "file_search", "vector_store_ids": ["<vector_store_del_equipo>"]}]
+```text
+app/       Aplicación Android, recursos, modelo y guías empaquetadas
+ml/        Dataset, configuración de Label Studio y herramientas de entrenamiento
+backend/   Fuentes documentales y utilidades administrativas de File Search
+docs/      Documentación del dataset y evidencias del proyecto
 ```
 
-Si detecta p. ej. `ohaus_pr224`, un alias lo mapea a `balanza_analitica` (véase
-`backend/data/equipment_knowledge.json`).
+La APK realiza sus consultas directamente a OpenAI. El directorio `backend` no es necesario durante la ejecución; conserva las fuentes documentales y las herramientas administrativas utilizadas para preparar los vector stores.
 
-## 4. Android
+## Entrenamiento del detector
 
-Abra el proyecto en Android Studio, sync Gradle, instale en dispositivo/emulador.
+Las imágenes se etiquetan en Label Studio con una caja ajustada al cuerpo completo de cada equipo. Las fotografías sin equipos deben permanecer sin cajas para funcionar como ejemplos negativos.
 
-Configure la URL del backend en `local.properties`:
+Flujo recomendado:
 
-```properties
-# Emulador de Android Studio
-rag.base.url=http://10.0.2.2:8000/
-# Configuración privada del backend (este archivo está ignorado por Git)
-openai.api.key=SU_CLAVE_DE_OPENAI
-openai.model=gpt-4o-mini
-llm.provider=openai
-openai.file.search.top.k=4
-# Teléfono real: use la IP LAN del computador, por ejemplo:
-# rag.base.url=http://192.168.1.25:8000/
-```
+1. Exportar las anotaciones en formato YOLO.
+2. Validar que cada imagen tenga la clase y la caja correctas.
+3. Dividir el conjunto entre entrenamiento, validación y prueba.
+4. Entrenar el modelo YOLO.
+5. Exportar el mejor peso a TensorFlow Lite.
+6. Copiar el modelo final a `ml/models/model.tflite` y compilar nuevamente.
 
-El asistente de voz usa el reconocimiento y síntesis de Android. La app envía la
-clase YOLO en el encabezado `X-Equipment-Id`; el backend resuelve de forma segura
-los `vector_store_ids`/`file_ids` del equipo y ejecuta OpenAI File Search.
+Los comandos auxiliares se encuentran en `ml/scripts/` y la definición de clases en `ml/dataset/data.yaml`.
 
-## Clases por defecto
+## Seguridad
 
-`incubadora`, `agitador_orbital`, `balanza_analitica`, `phmetro`, `centrifugadora`, `estufa_secado`, `banio_maria`, `microscopio`
+- Las credenciales no se incluyen en Git ni dentro del APK.
+- La copia de seguridad de datos de la aplicación está deshabilitada.
+- Cada instalación utiliza la clave configurada por su propietario.
+- Los identificadores de vector stores no conceden acceso sin una API key autorizada.
+- Antes de publicar una versión se deben ejecutar las pruebas y revisar que no existan secretos en los archivos versionados.
 
-Ajuste la lista en Label Studio y en `data.yaml` si el laboratorio usa otros equipos (p. ej. contador de colonias).
+## Institución
+
+Laboratorio de Rumiología — Universidad Técnica Estatal de Quevedo (UTEQ).

@@ -30,11 +30,7 @@ public class PdfViewerActivity extends AppCompatActivity {
         
         webView.setWebViewClient(new WebViewClient());
         
-        // En Android moderno, mostrar PDF local en WebView requiere un truco de Google Drive 
-        // o una librería. Como es un prototipo, cargaremos una URL de ejemplo o manejaremos la intención.
         if (path != null) {
-            // Nota: Para archivos locales de assets, WebView no los renderiza directamente como PDF.
-            // Esto es un placeholder funcional para la navegación.
             webView.loadUrl("file:///android_asset/" + path);
         }
 

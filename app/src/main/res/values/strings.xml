@@ -40,6 +40,9 @@
     <string name="chat_consulting">Consultando al asistente del equipo…</string>
     <string name="voice_talk">Hablar con el asistente</string>
     <string name="voice_listening">Escuchando… hable ahora</string>
+    <string name="voice_listening_title">Escuchando tu pregunta…</string>
+    <string name="voice_listening_hint">Habla con claridad · toca aquí para detener</string>
+    <string name="voice_stop">Detener grabación</string>
     <string name="voice_processing">Procesando su voz…</string>
     <string name="voice_speaking">Reproduciendo respuesta…</string>
     <string name="voice_heard">Escuché: %1$s</string>
@@ -55,6 +58,17 @@
     <string name="detecting_header_title">Lab Rumiología</string>
     <string name="detecting_header_subtitle">UTEQ</string>
     <string name="detecting_header_slogan">Ciencia aplicada\nal bienestar animal</string>
+    <string name="api_settings">Configurar OpenAI</string>
+    <string name="api_key_title">Clave personal de OpenAI</string>
+    <string name="api_key_hint">sk-proj-…</string>
+    <string name="api_key_field_label">API key de OpenAI</string>
+    <string name="api_key_explanation">La clave se cifra en este teléfono. Es necesaria para usar la aplicación.</string>
+    <string name="api_key_save">Guardar</string>
+    <string name="api_key_delete">Eliminar clave</string>
+    <string name="api_key_required">Configure una API key de OpenAI para continuar.</string>
+    <string name="api_key_saved">Clave guardada correctamente</string>
+    <string name="api_key_invalid">Ingrese una clave válida de OpenAI.</string>
+    <string name="api_key_security_note">Protegida con el sistema de cifrado de Android. No se incluye en copias de seguridad.</string>
     <string name="equipos_encontrados">%1$d equipos encontrados</string>
     <string name="selecciona_equipo">Selecciona un equipo para ver su información</string>
     <string name="ver_equipo">Ver %1$s</string>
