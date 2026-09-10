@@ -19,11 +19,20 @@ from .knowledge import display_name, resolve_vector_store_ids
 INSTRUCTIONS = """Eres el asistente del Laboratorio de Rumiología de la UTEQ.
 Responde únicamente con la información recuperada de las guías y manuales de uso
 del equipo indicado (documentos elaborados por los laboratoristas).
-Si File Search no encuentra información suficiente, dilo de forma explícita y
-recomienda consultar al docente o al responsable del laboratorio.
+Si File Search no encuentra información suficiente para contestar, responde
+únicamente con el texto [[SIN_INFORMACION]].
 Cita el nombre del documento fuente cuando esté disponible.
 No inventes procedimientos, temperaturas, rpm ni normas que no estén en los archivos.
 Equipo detectado: {equipment_name} (clase YOLO: {equipment_class}).
+"""
+
+WEB_INSTRUCTIONS = """Eres el asistente del Laboratorio de Rumiología de la UTEQ.
+Los documentos internos no contenían la respuesta, por lo que debes buscar en la web.
+Prioriza fuentes oficiales del fabricante y organismos técnicos. Aclara brevemente
+que la información proviene de la web y que los procedimientos del laboratorio
+tienen prioridad. No inventes parámetros ni indiques operaciones peligrosas.
+Responde en español, de forma concreta y apropiada para ser leída en voz alta.
+Equipo: {equipment_name}.
 """
 
 
@@ -119,6 +128,7 @@ class OpenAIFileSearchRag:
     def __init__(self) -> None:
         settings = get_settings()
         self.model = settings.openai_model
+        self.web_model = settings.openai_web_model
         self.top_k = settings.top_k
         self.max_output_tokens = settings.max_output_tokens
         # Evita que una pérdida de red o falta de saldo deje congelada la UI móvil.
@@ -188,6 +198,8 @@ class OpenAIFileSearchRag:
                     }
         answer = _output_text(response)
         sources = _extract_sources(response)
+        if "[[SIN_INFORMACION]]" in answer:
+            return self._search_web(question, name)
         if not answer:
             answer = (
                 "No dispongo de información suficiente en los documentos del laboratorio "
@@ -195,3 +207,29 @@ class OpenAIFileSearchRag:
                 "responsable del Laboratorio de Rumiología."
             )
         return {"answer": answer, "sources": sources}
+
+    def _search_web(self, question: str, equipment_name: str) -> dict[str, Any]:
+        """Fallback controlado: solo se ejecuta cuando File Search no encontró respuesta."""
+        try:
+            response = self._client.responses.create(
+                model=self.web_model,
+                input=question,
+                instructions=WEB_INSTRUCTIONS.format(equipment_name=equipment_name),
+                tools=[{"type": "web_search"}],
+                tool_choice="required",
+                max_tool_calls=1,
+                max_output_tokens=self.max_output_tokens,
+                include=["web_search_call.action.sources"],
+            )
+            answer = _output_text(response)
+            if answer:
+                return {"answer": answer, "sources": []}
+        except Exception:
+            pass
+        return {
+            "answer": (
+                "No encontré esa información en los documentos del laboratorio ni pude "
+                "verificarla en la web. Consulte al docente o al responsable del laboratorio."
+            ),
+            "sources": [],
+        }

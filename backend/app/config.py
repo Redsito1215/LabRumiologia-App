@@ -48,6 +48,7 @@ def _path_from_property(key: str, default: Path) -> Path:
 class Settings:
     openai_api_key: str = setting("OPENAI_API_KEY", "openai.api.key")
     openai_model: str = setting("OPENAI_MODEL", "openai.model", "gpt-4o-mini")
+    openai_web_model: str = setting("OPENAI_WEB_MODEL", "openai.web.model", "gpt-5-mini")
     gemini_api_key: str = setting("GEMINI_API_KEY", "gemini.api.key")
     host: str = setting("BACKEND_HOST", "backend.host", "0.0.0.0")
     port: int = int(setting("BACKEND_PORT", "backend.port", "8000"))

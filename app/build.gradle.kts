@@ -48,7 +48,6 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.tensorflow.lite)
-    implementation(libs.tensorflow.lite.select.tf.ops)
     implementation(libs.gson)
     implementation(libs.activity.ktx)
     implementation(libs.appcompat)

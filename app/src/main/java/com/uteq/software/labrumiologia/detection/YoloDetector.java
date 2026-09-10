@@ -14,7 +14,6 @@ import com.uteq.software.labrumiologia.model.Detection;
 import com.uteq.software.labrumiologia.model.EquipmentInfo;
 
 import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.flex.FlexDelegate;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -395,16 +394,8 @@ public class YoloDetector implements AutoCloseable {
         options.setUseXNNPACK(true);
         try {
             return new Interpreter(model, options);
-        } catch (Exception first) {
-            try {
-                Interpreter.Options flex = new Interpreter.Options();
-                flex.setNumThreads(4);
-                flex.setUseXNNPACK(true);
-                flex.addDelegate(new FlexDelegate());
-                return new Interpreter(model, flex);
-            } catch (Exception second) {
-                throw new IOException(first.getMessage(), first);
-            }
+        } catch (Exception error) {
+            throw new IOException("El modelo YOLO no es compatible con TensorFlow Lite", error);
         }
     }
 

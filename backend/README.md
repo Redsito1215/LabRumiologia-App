@@ -24,6 +24,7 @@ OPENAI_API_KEY=secretoaqui
 GEMINI_API_KEY=secretoaqui
 LLM_PROVIDER=openai
 OPENAI_MODEL=gpt-4o-mini
+OPENAI_WEB_MODEL=gpt-5-mini
 OPENAI_FILE_SEARCH_TOP_K=4
 OPENAI_MAX_OUTPUT_TOKENS=300
 REQUESTS_PER_MINUTE=20
@@ -75,6 +76,8 @@ Las rutas públicas de consulta exigen `X-App-Token` y aplican un límite por IP
 `POST /ingest` exige el secreto independiente `X-Admin-Token`.
 
 La app **no** envía documentos ni IDs de OpenAI: solo pregunta + clase detectada.
+Primero se consulta File Search. La búsqueda web de OpenAI se usa únicamente cuando
+los documentos asignados no contienen una respuesta suficiente.
 
 ## Proveedor
 
