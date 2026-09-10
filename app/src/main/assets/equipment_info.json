@@ -1,5 +1,16 @@
 [
   {
+    "id": "ankom_a200",
+    "name": "Analizador de fibra ANKOM A200",
+    "brand": "ANKOM Technology",
+    "description": "Analizador semiautomático que determina fibra detergente neutra, fibra detergente ácida y fibra cruda mediante bolsas filtro, temperatura controlada y agitación.",
+    "tempRange": "Según método",
+    "function": "Procesar hasta 24 muestras por corrida para cuantificar las fracciones fibrosas de forrajes y alimentos.",
+    "components": ["Vaso de digestión", "Tapa con cierre", "Calefacción", "Agitador", "Temporizador", "Controlador de temperatura", "Manguera de drenaje"],
+    "usage": "Verificar agua y drenaje, cargar bolsas filtro selladas, añadir la solución indicada, cerrar, activar calor y agitación y aplicar exactamente el tiempo del método ADF, NDF o fibra cruda.",
+    "safety": "Usar bata, guantes y gafas. Los detergentes y ácidos pueden causar quemaduras; no abrir durante el calentamiento y mantener asegurada la manguera de escape."
+  },
+  {
     "id": "ankom_daisy_ii",
     "name": "Incubadora ANKOM Daisy II",
     "brand": "ANKOM Technology",
@@ -9,6 +20,50 @@
     "components": ["Cámara de incubación", "Rotor", "4 frascos de digestión", "Controlador de temperatura", "Temporizador"],
     "usage": "Pesar y sellar bolsas F57 (AIE-200), cargar frascos con buffer e inóculo, purgar con CO2 ~30 s, incubar el tiempo de la práctica.",
     "safety": "Material biológico ruminal: bata y guantes. Superficies calientes."
+  },
+  {
+    "id": "banio_maria_memmert",
+    "name": "Baño María Memmert",
+    "brand": "Memmert",
+    "description": "Baño de agua termostatizado para calentar o mantener recipientes y muestras a una temperatura uniforme sin contacto con una llama directa.",
+    "tempRange": "Según práctica",
+    "function": "Templar buffers, soluciones, inóculos y muestras en condiciones térmicas controladas.",
+    "components": ["Tina de acero inoxidable", "Tapa", "Controlador digital", "Sensor de temperatura", "Protección por sobretemperatura"],
+    "usage": "Llenar con agua al nivel indicado antes de encender, programar el setpoint, esperar la estabilización, introducir recipientes seguros y apagar cuando termine la práctica.",
+    "safety": "Nunca operar en seco. Evitar salpicaduras sobre el controlador y usar pinzas o protección térmica para retirar recipientes calientes."
+  },
+  {
+    "id": "contador_colonias",
+    "name": "Contador de colonias POL-EKO LKB 2002",
+    "brand": "POL-EKO",
+    "description": "Equipo de apoyo para el recuento manual de colonias visibles en placas de Petri mediante iluminación, lupa, cuadrícula y contador digital.",
+    "tempRange": "No aplica",
+    "function": "Facilitar el conteo reproducible de colonias para calcular UFC/mL o UFC/g según la dilución y el volumen sembrado.",
+    "components": ["Campo iluminado", "Cuadrícula", "Lupa ajustable", "Display digital", "Puntero contador", "Control de reinicio"],
+    "usage": "Encender, poner el contador en cero, colocar la placa cerrada, ajustar luz y lupa, contar sistemáticamente sin repetir colonias y registrar conteo, dilución y volumen.",
+    "safety": "Usar bata y guantes. Mantener cerradas las placas y eliminarlas mediante el protocolo de residuos biológicos del laboratorio."
+  },
+  {
+    "id": "desecador",
+    "name": "Desecador de vidrio",
+    "brand": "Material de laboratorio",
+    "description": "Recipiente hermético con desecante que permite enfriar y conservar muestras secas evitando que reabsorban humedad ambiental antes del pesaje.",
+    "tempRange": "Temperatura ambiente",
+    "function": "Enfriar bolsas filtro, crisoles y muestras procedentes de la estufa hasta obtener una masa estable.",
+    "components": ["Base de vidrio", "Tapa esmerilada", "Placa perforada", "Desecante", "Junta de cierre"],
+    "usage": "Comprobar el estado del desecante, introducir las muestras con pinzas, cerrar por el pomo, esperar hasta temperatura ambiente y pesar inmediatamente después de retirarlas.",
+    "safety": "Manipular con ambas manos y evitar choques térmicos. Si trabaja al vacío, igualar la presión antes de abrir y nunca recoger vidrio roto con las manos."
+  },
+  {
+    "id": "ohaus_pa214",
+    "name": "Balanza analítica OHAUS Pioneer PA214",
+    "brand": "OHAUS",
+    "description": "Balanza analítica de alta resolución para pesajes de muestras, reactivos y bolsas filtro cuando se requiere sensibilidad de 0,1 mg.",
+    "tempRange": "No aplica",
+    "function": "Realizar pesajes analíticos de hasta aproximadamente 210 g con resolución típica de 0,0001 g, sujeto a la placa del equipo.",
+    "components": ["Cámara antiviento", "Plato circular", "Display", "Teclas de tara y calibración", "Nivel de burbuja", "Patas niveladoras"],
+    "usage": "Nivelar y encender, esperar estabilidad, colocar el recipiente, tarar, añadir la muestra con las puertas cerradas y registrar únicamente una lectura estable.",
+    "safety": "No sobrecargar ni mover la balanza calibrada. Evitar corrientes de aire, golpes, derrames y muestras calientes o húmedas sobre el plato."
   },
   {
     "id": "aquasearcher",
@@ -53,5 +108,16 @@
     "components": ["Horno de columna", "Inyector", "Detector", "Teclado START/STOP", "Autosampler", "Líneas de gases"],
     "usage": "El estudiante prepara viales y observa. Gases y temperaturas: solo el docente.",
     "safety": "Gases a presión, altas temperaturas. No operar sin supervisión."
+  },
+  {
+    "id": "selladora_aie200",
+    "name": "Selladora de impulso AIE-200",
+    "brand": "American International Electric",
+    "description": "Selladora térmica de impulso utilizada para cerrar bolsas filtro ANKOM y bolsas plásticas autorizadas sin aplicar calor de manera continua.",
+    "tempRange": "Tiempo de impulso ajustable",
+    "function": "Producir un sello uniforme que impida la pérdida de muestra durante los procedimientos con Daisy II y ANKOM A200.",
+    "components": ["Brazo de presión", "Barra calefactora", "Cinta de teflón", "Dial de tiempo", "Indicador de ciclo", "Cable de alimentación"],
+    "usage": "Alinear una zona limpia de la bolsa, ajustar inicialmente un tiempo bajo, presionar el brazo hasta completar el impulso y comprobar que el sello quede continuo y sin quemaduras.",
+    "safety": "No tocar la barra caliente ni sellar bolsas con líquido. Desconectar al terminar y reportar chispas, olor a quemado o deterioro del teflón."
   }
 ]

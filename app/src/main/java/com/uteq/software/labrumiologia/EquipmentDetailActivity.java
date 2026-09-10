@@ -46,6 +46,8 @@ public class EquipmentDetailActivity extends AppCompatActivity {
         TextView components = findViewById(R.id.equipmentComponents);
         TextView function = findViewById(R.id.equipmentFunction);
         TextView brandBottom = findViewById(R.id.equipmentBrand);
+        TextView usage = findViewById(R.id.equipmentUsage);
+        TextView safety = findViewById(R.id.equipmentSafety);
 
         EquipmentInfo info = equipmentId != null ? new EquipmentRepository(this).get(equipmentId) : null;
         
@@ -77,6 +79,8 @@ public class EquipmentDetailActivity extends AppCompatActivity {
             components.setText(join(info.components));
             function.setText(info.function);
             brandBottom.setText(info.brand != null ? info.brand : "N/A");
+            usage.setText(info.usage != null ? info.usage : getString(R.string.info_not_available));
+            safety.setText(info.safety != null ? info.safety : getString(R.string.info_not_available));
         } else {
             title.setText(equipmentLabel != null ? equipmentLabel : equipmentId);
             nameSub.setText(equipmentLabel != null ? equipmentLabel : equipmentId);
@@ -88,6 +92,8 @@ public class EquipmentDetailActivity extends AppCompatActivity {
             components.setText("-");
             function.setText("-");
             brandBottom.setText("N/A");
+            usage.setText(R.string.info_not_available);
+            safety.setText(R.string.info_not_available);
         }
 
         bindCatalogPhoto(thumbImage, equipmentId);

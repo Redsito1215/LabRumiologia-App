@@ -69,6 +69,7 @@ public class DetectionActivity extends AppCompatActivity {
     private final List<Detection> latestDetections = new ArrayList<>();
     private int selectedIndex = -1;
     private String selectedClassId = null;
+    private boolean selectedByUser = false;
     private boolean modelAvailable = false;
 
     @Override
@@ -120,6 +121,7 @@ public class DetectionActivity extends AppCompatActivity {
     private void selectDetection(Detection detection, int index) {
         selectedIndex = index;
         selectedClassId = detection != null ? detection.classId : null;
+        selectedByUser = detection != null && index >= 0;
         overlayView.setSelectedIndex(index);
         adapter.submit(new ArrayList<>(latestDetections), selectedIndex);
         btnInfo.setEnabled(detection != null);
@@ -160,8 +162,9 @@ public class DetectionActivity extends AppCompatActivity {
 
         ImageAnalysis analysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-                .setTargetResolution(new android.util.Size(1280, 720))
+                // CameraX hace la conversión nativa; evita comprimir cada frame a JPEG.
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                .setTargetResolution(new android.util.Size(640, 480))
                 .build();
         analysis.setAnalyzer(analysisExecutor, this::analyzeFrame);
 
@@ -189,7 +192,7 @@ public class DetectionActivity extends AppCompatActivity {
             return;
         }
         try {
-            Bitmap bitmap = yuvToBitmap(image);
+            Bitmap bitmap = image.toBitmap();
             if (bitmap == null) return;
             int rotation = image.getImageInfo().getRotationDegrees();
             if (rotation != 0) {
@@ -246,20 +249,28 @@ public class DetectionActivity extends AppCompatActivity {
     private void showDetections(List<Detection> detections, int srcW, int srcH) {
         latestDetections.clear();
         latestDetections.addAll(visibleDetections(detections, srcW, srcH));
-        if (selectedClassId != null) {
+        if (latestDetections.isEmpty()) {
+            selectedIndex = -1;
+            selectedClassId = null;
+            selectedByUser = false;
+        } else if (latestDetections.size() == 1) {
+            // Una sola máquina no requiere una selección adicional.
+            selectedIndex = 0;
+            selectedClassId = latestDetections.get(0).classId;
+            selectedByUser = false;
+        } else if (selectedByUser && selectedClassId != null) {
             int byClass = DetectionTracker.indexOfClass(latestDetections, selectedClassId);
-            selectedIndex = byClass >= 0 ? byClass : (latestDetections.isEmpty() ? -1 : 0);
+            selectedIndex = byClass;
             if (selectedIndex >= 0) {
                 selectedClassId = latestDetections.get(selectedIndex).classId;
             } else {
                 selectedClassId = null;
+                selectedByUser = false;
             }
-        } else if (selectedIndex >= latestDetections.size()) {
-            selectedIndex = latestDetections.isEmpty() ? -1 : 0;
-            selectedClassId = selectedIndex >= 0 ? latestDetections.get(selectedIndex).classId : null;
-        } else if (selectedIndex < 0 && !latestDetections.isEmpty()) {
-            selectedIndex = 0;
-            selectedClassId = latestDetections.get(0).classId;
+        } else {
+            // Con varias máquinas, esperar una elección explícita del usuario.
+            selectedIndex = -1;
+            selectedClassId = null;
         }
         if (latestDetections.isEmpty()) {
             selectedIndex = -1;

@@ -61,11 +61,9 @@ public class DetectionAdapter extends RecyclerView.Adapter<DetectionAdapter.Hold
                 on ? R.color.primary : android.R.color.transparent));
         holder.card.setCardBackgroundColor(ContextCompat.getColor(holder.itemView.getContext(),
                 on ? R.color.primary_soft : R.color.white));
-        
+        holder.card.setCardElevation(on ? 8f : 0f);
         holder.selector.setImageResource(on ? R.drawable.ic_check_circle : R.drawable.ic_circle_outline);
-        
         bindThumbnail(holder.image, d.classId);
-        
         holder.itemView.setOnClickListener(v -> listener.onClick(d, holder.getBindingAdapterPosition()));
     }
 

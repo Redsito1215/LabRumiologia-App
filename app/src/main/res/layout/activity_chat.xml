@@ -384,6 +384,17 @@
                 android:nestedScrollingEnabled="false" />
 
             <TextView
+                android:id="@+id/btnVoiceChange"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_gravity="start"
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:text="@string/voice_change"
+                android:textColor="@color/primary"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/voiceStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -410,7 +421,8 @@
             android:id="@+id/btnMic"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:background="@drawable/bg_camera_button"
+            android:backgroundTint="@color/primary_soft"
             android:src="@drawable/ic_mic"
             app:tint="@color/primary"
             android:contentDescription="Micrófono" />
@@ -433,7 +445,7 @@
             android:layout_height="48dp"
             android:layout_marginStart="8dp"
             android:background="@drawable/bg_camera_button"
-            android:backgroundTint="@color/primary"
+            android:backgroundTint="@color/primary_dark"
             android:src="@drawable/ic_arrow_forward"
             app:tint="@color/white"
             android:contentDescription="Enviar" />

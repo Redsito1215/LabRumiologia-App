@@ -2,6 +2,7 @@ package com.uteq.software.labrumiologia;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,13 +12,17 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -46,8 +51,9 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private String equipmentId;
     private ChatAdapter adapter;
     private EditText input;
-    private View btnSend;
-    private View btnMic;
+    private ImageButton btnSend;
+    private ImageButton btnMic;
+    private TextView btnVoiceChange;
     private TextView voiceStatus;
     private AssistantRepository assistant;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -57,6 +63,8 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private boolean ttsReady;
     private boolean listening;
     private boolean voiceMode;
+    private boolean requestInFlight;
+    private int selectedVoiceIndex = -1;
     private final List<Voice> spanishVoices = new ArrayList<>();
 
     @Override
@@ -79,13 +87,23 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         input = findViewById(R.id.chatInput);
         btnSend = findViewById(R.id.btnSend);
         btnMic = findViewById(R.id.btnMic);
+        btnVoiceChange = findViewById(R.id.btnVoiceChange);
         voiceStatus = findViewById(R.id.voiceStatus);
+
+        input.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { updateComposerUi(); }
+            @Override public void afterTextChanged(Editable s) {}
+        });
 
         btnSend.setOnClickListener(v -> {
             voiceMode = false;
             sendMessage(textFromInput());
         });
         btnMic.setOnClickListener(v -> toggleVoice());
+        btnVoiceChange.setOnClickListener(v -> showVoicePicker());
+        btnVoiceChange.setEnabled(false);
+        updateComposerUi();
         
         setupSuggestedQuestions();
 
@@ -178,6 +196,7 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
         tts.setPitch(1.0f);
         loadSpanishVoices();
         applyFemaleVoice();
+        btnVoiceChange.setEnabled(!spanishVoices.isEmpty());
     }
 
     private void loadSpanishVoices() {
@@ -198,7 +217,37 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private void applyFemaleVoice() {
         if (spanishVoices.isEmpty()) return;
-        tts.setVoice(spanishVoices.get(preferredVoiceIndex()));
+        selectedVoiceIndex = preferredVoiceIndex();
+        applySelectedVoice(false);
+    }
+
+    private void showVoicePicker() {
+        if (!ttsReady || spanishVoices.isEmpty()) {
+            setVoiceStatus(getString(R.string.voice_none));
+            return;
+        }
+        String[] labels = new String[spanishVoices.size()];
+        for (int i = 0; i < spanishVoices.size(); i++) {
+            Voice voice = spanishVoices.get(i);
+            labels[i] = voice.getLocale().getDisplayName(new Locale("es")) + " · " + voice.getName();
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.voice_change)
+                .setSingleChoiceItems(labels, Math.max(0, selectedVoiceIndex), (dialog, which) -> {
+                    selectedVoiceIndex = which;
+                    applySelectedVoice(true);
+                    dialog.dismiss();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void applySelectedVoice(boolean preview) {
+        if (tts == null || selectedVoiceIndex < 0 || selectedVoiceIndex >= spanishVoices.size()) return;
+        Voice voice = spanishVoices.get(selectedVoiceIndex);
+        tts.setVoice(voice);
+        setVoiceStatus(getString(R.string.voice_selected, voice.getLocale().getDisplayName(new Locale("es"))));
+        if (preview) tts.speak(getString(R.string.voice_preview), TextToSpeech.QUEUE_FLUSH, null, "voice_preview");
     }
 
     private int preferredVoiceIndex() {
@@ -286,7 +335,23 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     private void updateMicUi(boolean active) {
-        btnMic.setAlpha(active ? 0.5f : 1.0f);
+        int background = ContextCompat.getColor(this, active ? R.color.primary : R.color.primary_soft);
+        int foreground = ContextCompat.getColor(this, active ? R.color.white : R.color.primary);
+        btnMic.setBackgroundTintList(ColorStateList.valueOf(background));
+        btnMic.setColorFilter(foreground);
+        btnMic.setAlpha(btnMic.isEnabled() ? 1.0f : 0.35f);
+    }
+
+    private void updateComposerUi() {
+        if (btnSend == null || btnMic == null || input == null) return;
+        boolean canSend = !requestInFlight && !textFromInput().isEmpty();
+        btnSend.setEnabled(canSend);
+        btnSend.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(
+                this, canSend ? R.color.primary_dark : R.color.primary_soft)));
+        btnSend.setColorFilter(ContextCompat.getColor(this, canSend ? R.color.white : R.color.on_surface_muted));
+        btnSend.setAlpha(canSend ? 1.0f : 0.55f);
+        btnMic.setEnabled(!requestInFlight);
+        updateMicUi(listening);
     }
 
     private void setVoiceStatus(String text) {
@@ -304,12 +369,12 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     private void sendMessage(String question) {
-        if (question == null || question.isEmpty()) return;
+        if (question == null || question.isEmpty() || requestInFlight) return;
 
         adapter.add(new ChatAdapter.Message("Usted", question, null));
         input.setText("");
-        btnSend.setEnabled(false);
-        btnMic.setEnabled(false);
+        requestInFlight = true;
+        updateComposerUi();
         adapter.add(new ChatAdapter.Message("Asistente", getString(R.string.chat_consulting), null, true));
 
         final boolean speakReply = voiceMode;
@@ -319,12 +384,12 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
             LocalGuide.Reply reply = assistant.ask(question, equipmentId);
             runOnUiThread(() -> {
                 if (isDestroyed()) return;
-                btnSend.setEnabled(true);
-                btnMic.setEnabled(true);
+                requestInFlight = false;
+                updateComposerUi();
                 adapter.removeLastIfPlaceholder();
                 
                 String cleanAnswer = sanitizeAnswer(reply.answer);
-                adapter.add(new ChatAdapter.Message("Asistente", cleanAnswer, reply.sources));
+                adapter.add(new ChatAdapter.Message("Asistente", cleanAnswer, null));
                 
                 if (speakReply) speak(cleanAnswer);
             });
@@ -345,9 +410,22 @@ public class ChatActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private void speak(String text) {
         if (!ttsReady || tts == null || text == null || text.isEmpty()) return;
         String clean = text.replaceAll("(?m)^#+\\s*", "").replaceAll("[*`_#>]", "").replaceAll("\\s+", " ").trim();
-        if (clean.length() > 900) clean = clean.substring(0, 900) + "…";
+        clean = compactForSpeech(clean);
         setVoiceStatus(getString(R.string.voice_speaking));
         tts.speak(clean, TextToSpeech.QUEUE_FLUSH, null, "lab_reply");
+    }
+
+    private static String compactForSpeech(String text) {
+        String[] sentences = text.split("(?<=[.!?])\\s+");
+        StringBuilder shortReply = new StringBuilder();
+        for (String sentence : sentences) {
+            if (sentence.trim().isEmpty()) continue;
+            if (shortReply.length() > 0) shortReply.append(' ');
+            shortReply.append(sentence.trim());
+            if (shortReply.length() >= 260 || shortReply.toString().split("(?<=[.!?])").length >= 2) break;
+        }
+        String result = shortReply.length() == 0 ? text : shortReply.toString();
+        return result.length() > 340 ? result.substring(0, 340).trim() + "…" : result;
     }
 
     @Override

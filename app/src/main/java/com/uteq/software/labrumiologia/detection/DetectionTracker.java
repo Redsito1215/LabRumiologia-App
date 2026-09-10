@@ -17,10 +17,11 @@ public class DetectionTracker {
     private static final float EMA_ALPHA = 0.65f;
     /** Frames sin match antes de borrar el track. */
     private static final int MAX_MISSED = 3;
-    private static final int MAX_TRACKS = 4;
-    private static final float MIN_TRACK_CONF = 0.55f;
-    /** Exige varios fotogramas consecutivos antes de mostrar un equipo. */
-    private static final int MIN_CONFIRMED_HITS = 3;
+    private static final int MAX_TRACKS = 3;
+    private static final float MIN_TRACK_CONF = 0.50f;
+    /** Las detecciones firmes salen de inmediato; las dudosas deben repetirse. */
+    private static final float IMMEDIATE_CONF = 0.70f;
+    private static final int LOW_CONFIRMED_HITS = 2;
 
     private static final class Track {
         final int id;
@@ -108,7 +109,8 @@ public class DetectionTracker {
         List<Detection> out = new ArrayList<>();
         for (Track t : tracks) {
             if (!t.updated) continue;
-            if (t.confidence < MIN_TRACK_CONF || t.hits < MIN_CONFIRMED_HITS) continue;
+            if (t.confidence < MIN_TRACK_CONF) continue;
+            if (t.confidence < IMMEDIATE_CONF && t.hits < LOW_CONFIRMED_HITS) continue;
             out.add(new Detection(t.classId, t.label, t.confidence, new RectF(t.box)));
         }
         return out;

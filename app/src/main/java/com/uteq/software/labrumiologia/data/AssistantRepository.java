@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.uteq.software.labrumiologia.BuildConfig;
+import com.uteq.software.labrumiologia.model.EquipmentInfo;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,14 +20,17 @@ import java.nio.charset.StandardCharsets;
 public class AssistantRepository {
     private static final String TAG = "AssistantRepository";
     private final LocalGuide fallback;
+    private final EquipmentRepository equipmentRepository;
 
     public AssistantRepository(Context context) {
         fallback = new LocalGuide(context);
+        equipmentRepository = new EquipmentRepository(context);
     }
 
     public LocalGuide.Reply ask(String question, String equipmentId) {
         try {
-            return askBackend(question, equipmentId);
+            LocalGuide.Reply remote = askBackend(question, equipmentId);
+            return isInsufficient(remote.answer) ? catalogReply(question, equipmentId, remote) : remote;
         } catch (Exception error) {
             Log.w(TAG, "Backend no disponible o error de red: " + error.getMessage());
             // Si el backend falla, usamos la guía local
@@ -37,8 +41,43 @@ public class AssistantRepository {
                 return new LocalGuide.Reply("Lo siento, no puedo responder en este momento. Por favor, verifica tu conexión o intenta más tarde.", null);
             }
             
-            return localReply;
+            return isInsufficient(localReply.answer) ? catalogReply(question, equipmentId, localReply) : localReply;
         }
+    }
+
+    private LocalGuide.Reply catalogReply(String question, String equipmentId, LocalGuide.Reply original) {
+        EquipmentInfo info = equipmentRepository.get(equipmentId);
+        if (info == null) return original;
+        String q = question == null ? "" : question.toLowerCase();
+        String answer;
+        if (q.contains("temperatura") || q.contains("grados")) {
+            answer = "Temperatura o condición de trabajo: " + safe(info.tempRange)
+                    + ". Use únicamente el valor indicado en la práctica y verifíquelo antes de iniciar.";
+        } else if (q.contains("riesgo") || q.contains("segur") || q.contains("peligro")) {
+            answer = safe(info.safety);
+        } else if (q.contains("limpi") || q.contains("manten")) {
+            answer = "Apague y desconecte el equipo antes de limpiarlo. No moje controles ni conexiones. "
+                    + "Retire residuos con el método autorizado y reporte cualquier daño al responsable del laboratorio.";
+        } else if (q.contains("prend") || q.contains("encend") || q.contains("inici")) {
+            answer = "Antes de encender " + info.name + ", compruebe que esté limpio, correctamente conectado y listo para la práctica. "
+                    + safe(info.usage);
+        } else {
+            answer = safe(info.description) + " " + safe(info.function);
+        }
+        return new LocalGuide.Reply(answer.trim(), null);
+    }
+
+    private static boolean isInsufficient(String answer) {
+        if (answer == null || answer.trim().isEmpty()) return true;
+        String text = answer.toLowerCase();
+        return text.contains("no se encontró información específica")
+                || text.contains("no encontré esa información")
+                || text.contains("no dispongo de información suficiente")
+                || text.contains("no hay una base de conocimiento");
+    }
+
+    private static String safe(String value) {
+        return value == null || value.trim().isEmpty() ? "Consulte la guía validada del laboratorio" : value.trim();
     }
 
     private LocalGuide.Reply askBackend(String question, String equipmentId) throws Exception {

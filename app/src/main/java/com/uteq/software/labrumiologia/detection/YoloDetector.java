@@ -38,16 +38,19 @@ import java.util.Locale;
 public class YoloDetector implements AutoCloseable {
     public static final String MODEL_FILE = "model.tflite";
     public static final String LABELS_FILE = "labels.txt";
-    /** Umbral alto para evitar fantasmas cuando no hay equipo en cámara. */
-    public static final float CONF_THRESHOLD = 0.70f;
+    /**
+     * Umbral de candidato. Las capturas de otra pantalla pierden contraste y suelen
+     * quedar por debajo de 0.70; el tracker exige repetición para esos casos.
+     */
+    public static final float CONF_THRESHOLD = 0.50f;
     /** IoU para NMS; también suprime clases distintas muy solapadas (mismo objeto). */
     public static final float IOU_THRESHOLD = 0.45f;
     public static final float CROSS_CLASS_IOU = 0.55f;
     /** Suprime una etiqueta alternativa cuando ambas cajas describen el mismo objeto. */
     public static final float CROSS_CLASS_CONTAINMENT = 0.72f;
-    public static final int MAX_DETECTIONS = 4;
-    /** Ajuste visual mínimo: conserva el encuadre aprendido por YOLO. */
-    public static final float BOX_INSET_RATIO = 0.02f;
+    public static final int MAX_DETECTIONS = 3;
+    /** Cierra ligeramente las cajas para centrar el marco sobre el cuerpo de la máquina. */
+    public static final float BOX_INSET_RATIO = 0.04f;
 
     private enum OutputMode { END2END_ROWS, END2END_COLS, RAW_YOLO }
 
@@ -389,12 +392,14 @@ public class YoloDetector implements AutoCloseable {
         ByteBuffer model = loadModelBuffer(context, MODEL_FILE);
         Interpreter.Options options = new Interpreter.Options();
         options.setNumThreads(4);
+        options.setUseXNNPACK(true);
         try {
             return new Interpreter(model, options);
         } catch (Exception first) {
             try {
                 Interpreter.Options flex = new Interpreter.Options();
                 flex.setNumThreads(4);
+                flex.setUseXNNPACK(true);
                 flex.addDelegate(new FlexDelegate());
                 return new Interpreter(model, flex);
             } catch (Exception second) {

@@ -50,6 +50,7 @@
     <string name="voice_selected">Voz: %1$s</string>
     <string name="voice_preview">Hola, soy el asistente del laboratorio.</string>
     <string name="voice_none">No hay otras voces en español en este dispositivo</string>
+    <string name="info_not_available">Información pendiente de validación por el laboratorio.</string>
 
     <string name="detecting_header_title">Lab Rumiología</string>
     <string name="detecting_header_subtitle">UTEQ</string>

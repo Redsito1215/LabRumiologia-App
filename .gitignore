@@ -39,6 +39,7 @@ backend/server-error.log
 
 # Dataset packs for Colab (large)
 ml/exports/*.zip
+ml/exports/rumiologia_913/
 ml/exports/colab_chunks/
 ml/exports/upload_parts/
 ml/exports/_chunk_payload.txt
@@ -54,3 +55,4 @@ app/src/main/assets/docs/
 
 # Large binaries (track intentionally if needed)
 # app/src/main/assets/model.tflite
+ml/models/model_original_fp32_640.tflite

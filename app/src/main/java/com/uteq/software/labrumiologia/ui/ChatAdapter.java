@@ -77,7 +77,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.Holder> {
             holder.bubble.setBackgroundResource(R.drawable.bg_bubble_user);
             holder.body.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.white));
             holder.spacer.setVisibility(View.VISIBLE);
-            holder.sourceLayout.setVisibility(View.GONE);
             holder.container.setGravity(Gravity.END);
         } else {
             holder.root.setGravity(Gravity.START);
@@ -87,12 +86,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.Holder> {
             holder.spacer.setVisibility(View.GONE);
             holder.container.setGravity(Gravity.START);
             
-            if (m.sources != null && !m.sources.isEmpty()) {
-                holder.sourceLayout.setVisibility(View.VISIBLE);
-                holder.sources.setText(m.sources);
-            } else {
-                holder.sourceLayout.setVisibility(View.GONE);
-            }
         }
     }
 
@@ -108,8 +101,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.Holder> {
         final ImageView avatar;
         final TextView body;
         final TextView time;
-        final View sourceLayout;
-        final TextView sources;
         final View spacer;
 
         Holder(@NonNull View itemView) {
@@ -120,8 +111,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.Holder> {
             avatar = itemView.findViewById(R.id.messageAvatar);
             body = itemView.findViewById(R.id.messageBody);
             time = itemView.findViewById(R.id.messageTime);
-            sourceLayout = itemView.findViewById(R.id.sourceLayout);
-            sources = itemView.findViewById(R.id.messageSources);
             spacer = itemView.findViewById(R.id.messageSpacer);
         }
     }
