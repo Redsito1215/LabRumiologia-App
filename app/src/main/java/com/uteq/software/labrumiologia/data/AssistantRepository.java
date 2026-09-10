@@ -1,6 +1,7 @@
 package com.uteq.software.labrumiologia.data;
 
 import android.content.Context;
+import com.uteq.software.labrumiologia.model.EquipmentInfo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -32,10 +33,12 @@ public final class AssistantRepository {
         String key = keyStore.getKey();
         if (key == null) return new Reply("Configure su API key de OpenAI para continuar.", null);
         try {
+            String equipmentName = equipmentName(equipmentId);
             JSONArray stores = vectorStores(equipmentId);
             if (stores.length() > 0) {
                 try {
-                    JSONObject request = baseRequest("gpt-4o-mini", question,
+                    JSONObject request = baseRequest("gpt-4o-mini",
+                            "EQUIPO: " + equipmentName + "\nPREGUNTA: " + question,
                             "Responde en español usando solamente los documentos del equipo. " +
                             "Si no contienen la respuesta, responde exactamente [[SIN_INFORMACION]]. " +
                             "No inventes procedimientos ni parámetros.");
@@ -44,7 +47,7 @@ public final class AssistantRepository {
                             .put("max_num_results", 4)));
                     request.put("tool_choice", "required");
                     String answer = outputText(call(key, request));
-                    if (!answer.isEmpty() && !answer.contains("[[SIN_INFORMACION]]")) {
+                    if (!isMissingInformation(answer)) {
                         return new Reply(answer, null);
                     }
                 } catch (IllegalStateException error) {
@@ -60,15 +63,19 @@ public final class AssistantRepository {
                         "contienen la respuesta, responde exactamente [[SIN_INFORMACION]]. " +
                         "No inventes procedimientos ni parámetros.");
                 String answer = outputText(call(key, request));
-                if (!answer.isEmpty() && !answer.contains("[[SIN_INFORMACION]]")) {
+                if (!isMissingInformation(answer)) {
                     return new Reply(answer, null);
                 }
             }
 
-            JSONObject request = baseRequest("gpt-5-mini", question,
-                    "Busca en la web y responde brevemente en español. Prioriza al fabricante " +
-                    "y fuentes técnicas oficiales. Aclara que la información proviene de la web " +
-                    "y que el protocolo del laboratorio tiene prioridad. No inventes datos.");
+            JSONObject request = baseRequest("gpt-5-mini",
+                    "Investiga en la web información sobre el equipo \"" + equipmentName +
+                            "\" para responder esta solicitud: " + question,
+                    "Responde en español con información concreta sobre el equipo indicado. " +
+                    "Busca primero en el sitio del fabricante, manuales oficiales y fuentes técnicas " +
+                    "confiables. Si el usuario pide información amplia, incluye los aspectos relevantes " +
+                    "dentro del límite disponible. Distingue claramente cualquier dato que no sea del " +
+                    "fabricante y recuerda que el protocolo del laboratorio tiene prioridad. No inventes datos.");
             request.put("tools", new JSONArray().put(new JSONObject().put("type", "web_search")));
             request.put("tool_choice", "required");
             request.put("max_tool_calls", 1);
@@ -78,6 +85,24 @@ public final class AssistantRepository {
             String message = error.getMessage();
             return new Reply(message == null || message.isEmpty() ? "Error al consultar OpenAI." : message, null);
         }
+    }
+
+    private String equipmentName(String equipmentId) {
+        EquipmentInfo info = new EquipmentRepository(context).get(equipmentId);
+        if (info != null && info.name != null && !info.name.trim().isEmpty()) return info.name.trim();
+        return equipmentId == null || equipmentId.trim().isEmpty()
+                ? "equipo de laboratorio"
+                : equipmentId.replace('_', ' ');
+    }
+
+    private static boolean isMissingInformation(String answer) {
+        if (answer == null || answer.trim().isEmpty()) return true;
+        String normalized = answer.toLowerCase();
+        return normalized.contains("[[sin_informacion]]")
+                || normalized.contains("no se encontró información")
+                || normalized.contains("no encontré información")
+                || normalized.contains("no hay información específica")
+                || normalized.contains("no contienen la respuesta");
     }
 
     private static boolean isAuthenticationError(IllegalStateException error) {
@@ -120,7 +145,7 @@ public final class AssistantRepository {
 
     private static JSONObject baseRequest(String model, String question, String instructions) throws Exception {
         return new JSONObject().put("model", model).put("input", question)
-                .put("instructions", instructions).put("max_output_tokens", 300).put("store", false);
+                .put("instructions", instructions).put("max_output_tokens", 1000).put("store", false);
     }
 
     private static JSONObject call(String key, JSONObject body) throws Exception {
